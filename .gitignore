@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Data -- never commit patient data or large generated files
+*.nii.gz
+*.nii
+real_cases/
+synthetic_cases/
+overlays/
+patients/
+outputs_*/
+*.csv
+
+# Physician tool review data -- this is real output, keep it out of git,
+# back it up separately instead
+physician_tool/annotations/
+
+# Credentials
+.env
+*.key
+GEMINI_API_KEY*
+
+# OS / editor
+.DS_Store
+.vscode/
+*.swp
+
+# Rendered images (regenerable)
+*.png
+!docs/**/*.png

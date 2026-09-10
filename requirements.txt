@@ -1,0 +1,21 @@
+# Core scientific / imaging stack, used throughout data_pipeline, verification,
+# and synthetic_generation
+numpy
+scipy
+nibabel
+matplotlib
+Pillow
+
+# Report generation
+google-genai
+modal
+
+# Physician tool (Flask web app)
+flask
+
+# Note: synthetic_generation/modal_lefusion.py installs its OWN pinned
+# dependency set inside the Modal container image (LeFusion needs old,
+# specific versions -- pip==22.3.1, torch==2.1.2, numpy==1.23.0, etc).
+# That pinned list lives inside modal_lefusion.py itself, not here --
+# do not try to reconcile it with this file, they run in separate
+# environments (your local machine vs. the Modal container).
