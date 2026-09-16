@@ -46,30 +46,52 @@ def resolve_working_model(client) -> str:
     raise RuntimeError("No candidate Gemini model available.")
 
 
-def call_gemini(client, system, user_text, image_paths, max_retries=3):
-    model = resolve_working_model(client)
+def call_gemini(client, system, user_text, image_paths, max_retries=6):
+    """Tries the current model with generous retries for rate limiting. If
+    that model is still failing after all retries, falls back to the NEXT
+    candidate model instead of giving up entirely -- confirmed necessary
+    after a real run hit RESOURCE_EXHAUSTED repeatedly on the very first
+    case and died after only 3 short retries (20s/40s/60s), which wasn't
+    enough headroom for a tight free-tier per-minute limit."""
     parts = [types.Part.from_text(text=user_text)]
     for p in image_paths:
         with open(p, "rb") as f:
             img_bytes = f.read()
         parts.append(types.Part.from_bytes(data=img_bytes, mime_type="image/png"))
 
-    for attempt in range(max_retries):
-        try:
-            response = client.models.generate_content(
-                model=model,
-                contents=[types.Content(role="user", parts=parts)],
-                config=types.GenerateContentConfig(system_instruction=system),
-            )
-            return response.text, model
-        except Exception as e:
-            if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e) or "UNAVAILABLE" in str(e) or "503" in str(e):
-                wait = 20 * (attempt + 1)
-                print(f"    retrying in {wait}s...")
-                time.sleep(wait)
-                continue
-            raise
-    raise RuntimeError("Failed after retries.")
+    # try the model that's already known to work first (if any), then the
+    # remaining candidates in their original order, each exactly once
+    ordered_models = []
+    if _working_model["name"]:
+        ordered_models.append(_working_model["name"])
+    for c in MODEL_CANDIDATES:
+        if c not in ordered_models:
+            ordered_models.append(c)
+
+    tried_models = []
+    for candidate in ordered_models:
+        tried_models.append(candidate)
+
+        for attempt in range(max_retries):
+            try:
+                response = client.models.generate_content(
+                    model=candidate,
+                    contents=[types.Content(role="user", parts=parts)],
+                    config=types.GenerateContentConfig(system_instruction=system),
+                )
+                _working_model["name"] = candidate
+                return response.text, candidate
+            except Exception as e:
+                if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e) or "UNAVAILABLE" in str(e) or "503" in str(e):
+                    wait = min(30 * (attempt + 1), 120)
+                    print(f"    [{candidate}] rate limited, retrying in {wait}s "
+                          f"(attempt {attempt + 1}/{max_retries})...")
+                    time.sleep(wait)
+                    continue
+                raise
+        print(f"    [{candidate}] exhausted all retries, falling back to next model...")
+
+    raise RuntimeError(f"Failed after retries on all candidate models: {tried_models}")
 
 
 def find_one_overlay_pair(case_id: str):
@@ -133,7 +155,7 @@ def run_all(case_ids: list = None):
         except Exception as e:
             print(f"  [ERROR] {e}")
 
-        time.sleep(5)
+        time.sleep(15)
 
     print(f"\nDone. Check {out_dir}/<case_id>.json for the example reports and grounding checks.")
 

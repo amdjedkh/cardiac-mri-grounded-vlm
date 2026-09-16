@@ -28,9 +28,9 @@
     display: grid;
     grid-template-rows: auto 1fr;
     grid-template-columns: 280px 1fr 340px;
-    height: 100vh;
+    height: calc(100vh - 44px);
   }
-  .layout > .sidebar, .layout > .viewer, .layout > .review-panel {
+  .layout > .sidebar, .layout > .viewer, .layout > .review-panel, .layout > .report-viewer {
     grid-row: 2;
   }
   .sidebar {
@@ -73,7 +73,10 @@
   .case-list-item.status-pending { color: var(--text-dim); }
   .case-list-item.status-accepted { color: var(--accept); }
   .case-list-item.status-rejected { color: var(--reject); }
-  .case-list-item .status-dot {
+  .report-list-item.status-pending { color: var(--text-dim); }
+  .report-list-item.status-accepted { color: var(--accept); }
+  .report-list-item.status-rejected { color: var(--reject); }
+  .status-dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
@@ -267,6 +270,90 @@
     margin-top: 10px;
     text-align: center;
   }
+  .module-tabs {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 4px;
+    padding: 0 20px;
+    height: 44px;
+    align-items: flex-end;
+  }
+  .module-tab {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    padding: 12px 18px;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .module-tab.active {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+  #module2 { display: none; }
+  .report-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    height: calc(100vh - 90px);
+  }
+  .report-viewer {
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .report-viewer img {
+    max-width: 100%;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    background: #0d0e10;
+  }
+  .sentence {
+    padding: 3px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1.8;
+  }
+  .sentence:hover { background: #23262d; }
+  .sentence.flag-incorrect { background: rgba(217,83,79,0.28); }
+  .sentence.flag-hallucination { background: rgba(217,152,79,0.32); }
+  .sentence-tag-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    margin-left: 6px;
+  }
+  .report-list-item {
+    padding: 9px 10px;
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 2px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+  }
+  .report-list-item:hover { background: #23262d; }
+  .report-list-item.active { background: #262b35; color: var(--text); }
+  .flag-note-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 14px;
+    font-size: 12.5px;
+  }
+  .flag-note-box select, .flag-note-box input {
+    width: 100%;
+    background: #14161a;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    font-size: 12.5px;
+  }
   .canvas-wrap {
     position: relative;
     display: inline-block;
@@ -277,11 +364,93 @@
     left: 0;
     cursor: crosshair;
   }
+
+  .view-toggle-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .callout-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .callout-wrap img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    background: #0d0e10;
+  }
+  .callout-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .callout-marker {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid #0d0e10;
+    transform: translate(-50%, -50%);
+  }
+  .callout-box {
+    position: absolute;
+    box-sizing: border-box;
+    background: var(--panel);
+    border: 1.5px solid var(--border);
+    border-left-width: 4px;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    pointer-events: auto;
+    cursor: text;
+  }
+  .callout-box:focus {
+    outline: 2px solid var(--accent);
+  }
+  .callout-box.edited {
+    box-shadow: 0 0 0 1.5px var(--accent), 0 2px 10px rgba(0,0,0,0.4);
+  }
+  .callout-region-label {
+    display: block;
+    font-size: 9.5px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    opacity: 0.65;
+    margin-bottom: 3px;
+  }
+  .callout-unplaced-list {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .callout-unplaced-list .item {
+    padding: 6px 0;
+    border-top: 1px solid var(--border);
+  }
 </style>
 </head>
 <body>
 
-<div class="layout">
+<div class="module-tabs">
+  <button class="module-tab active" id="tabModule1">Image &amp; Mask Review</button>
+  <button class="module-tab" id="tabModule2">Report Review</button>
+</div>
+
+<div class="layout" id="module1">
   <div class="summary-bar">
     <span class="stat">Total: <b id="statTotal">0</b></span>
     <span class="stat accepted">Accepted: <b id="statAccepted">0</b></span>
@@ -326,6 +495,49 @@
 
     <button class="submit-btn" id="submitBtn" disabled>Save and next case</button>
     <div class="progress-note" id="progressNote"></div>
+  </div>
+</div>
+
+<div class="layout" id="module2">
+  <div class="summary-bar">
+    <span class="stat">Total: <b id="statTotal2">0</b></span>
+    <span class="stat accepted">Accepted: <b id="statAccepted2">0</b></span>
+    <span class="stat rejected">Rejected: <b id="statRejected2">0</b></span>
+    <span class="shortcut-hint">Click any sentence to flag it &middot; A accept &middot; R reject &middot; &#8593;&#8595; case</span>
+    <button class="export-btn" id="exportReportsBtn">Export flagged sentences + accepted</button>
+  </div>
+  <div class="sidebar">
+    <h1>Cardiac MRI Review</h1>
+    <div class="subtitle">Report validation</div>
+    <div id="reportList"></div>
+  </div>
+
+  <div class="report-viewer">
+    <div class="view-toggle-row">
+      <button class="toggle-btn active" id="paragraphViewToggle">Paragraph view</button>
+      <button class="toggle-btn" id="calloutViewToggle">Callout view</button>
+    </div>
+    <div id="reportViewerContent">
+      <div class="empty">Select a report from the list.</div>
+    </div>
+  </div>
+
+  <div class="review-panel">
+    <h2>Decision</h2>
+    <div class="case-meta" id="reportMeta">No report selected</div>
+
+    <div class="decision-row">
+      <button class="decision-btn accept" id="reportAcceptBtn">Accept</button>
+      <button class="decision-btn reject" id="reportRejectBtn">Reject</button>
+    </div>
+
+    <label class="field-label">Overall observations / comments</label>
+    <textarea id="reportCommentBox" placeholder="Anything worth noting about this report..."></textarea>
+
+    <div id="flaggedSentencesPanel"></div>
+
+    <button class="submit-btn" id="reportSubmitBtn" disabled>Save and next case</button>
+    <div class="progress-note" id="reportProgressNote"></div>
   </div>
 </div>
 
@@ -593,6 +805,420 @@ document.addEventListener('keydown', (e) => {
 });
 
 loadCases();
+
+// ---- Module tab switching ----
+document.getElementById('tabModule1').onclick = () => {
+  document.getElementById('module1').style.display = 'grid';
+  document.getElementById('module2').style.display = 'none';
+  document.getElementById('tabModule1').classList.add('active');
+  document.getElementById('tabModule2').classList.remove('active');
+};
+document.getElementById('tabModule2').onclick = () => {
+  document.getElementById('module1').style.display = 'none';
+  document.getElementById('module2').style.display = 'grid';
+  document.getElementById('tabModule1').classList.remove('active');
+  document.getElementById('tabModule2').classList.add('active');
+  if (!reportsLoaded) loadReports();
+};
+
+// ---- Module 2: report review ----
+let reports = [];
+let currentReportIdx = -1;
+let currentReport = null;
+let flaggedMap = {};  // sentence_index -> {tag, note}
+let reportsLoaded = false;
+let selectedReportDecision = null;
+let reportViewMode = 'paragraph';  // 'paragraph' | 'callout'
+let calloutEditsMap = {};  // finding_index -> edited text
+let currentCallouts = [];  // last-fetched callout data for the current report
+
+async function refreshReportSummary() {
+  const res = await fetch('/api/report_summary');
+  const summary = await res.json();
+  document.getElementById('statTotal2').textContent = summary.total;
+  document.getElementById('statAccepted2').textContent = summary.counts.accepted;
+  document.getElementById('statRejected2').textContent = summary.counts.rejected;
+  const statusById = {};
+  summary.reports.forEach(r => { statusById[r.id] = r.status; });
+  return statusById;
+}
+
+async function loadReports() {
+  const res = await fetch('/api/reports');
+  reports = await res.json();
+  const statusById = await refreshReportSummary();
+  renderReportList(statusById);
+  reportsLoaded = true;
+}
+
+function renderReportList(statusById) {
+  const list = document.getElementById('reportList');
+  list.innerHTML = '';
+  reports.forEach((r, i) => {
+    const status = (statusById || {})[r.id] || 'pending';
+    const div = document.createElement('div');
+    div.className = 'report-list-item status-' + status;
+    if (currentReport && currentReport.case_id === r.id) div.classList.add('active');
+    div.innerHTML = `<span class="status-dot"></span>${r.id}`;
+    div.onclick = () => selectReportByIndex(i);
+    list.appendChild(div);
+  });
+}
+
+async function selectReportByIndex(idx) {
+  if (idx < 0 || idx >= reports.length) return;
+  currentReportIdx = idx;
+  const r = reports[idx];
+
+  const res = await fetch(`/api/report/${r.id}`);
+  const data = await res.json();
+  if (data.error) {
+    document.getElementById('reportViewerContent').innerHTML = `<div class="empty">Error: ${data.error}</div>`;
+    return;
+  }
+  currentReport = data;
+  flaggedMap = {};
+  calloutEditsMap = {};
+  currentCallouts = [];
+  selectedReportDecision = null;
+  document.getElementById('reportCommentBox').value = '';
+
+  document.getElementById('reportMeta').innerHTML =
+    `case: ${data.case_id}<br>model: ${data.model}<br>${data.sentences.length} sentences`;
+
+  // pre-fill if this report was already reviewed, so revisiting works the same way as Module 1
+  const latestRes = await fetch(`/api/report/${r.id}/latest`);
+  const latest = await latestRes.json();
+  if (latest) {
+    selectedReportDecision = latest.decision;
+    document.getElementById('reportCommentBox').value = latest.comment || '';
+    (latest.flagged_sentences || []).forEach(f => {
+      flaggedMap[f.sentence_index] = { tag: f.tag, note: f.note || '' };
+    });
+    (latest.callout_edits || []).forEach(e => {
+      calloutEditsMap[e.finding_index] = e.text;
+    });
+    document.getElementById('reportAcceptBtn').classList.toggle('selected', latest.decision === 'accept');
+    document.getElementById('reportRejectBtn').classList.toggle('selected', latest.decision === 'reject');
+    document.getElementById('reportSubmitBtn').disabled = false;
+  } else {
+    document.getElementById('reportAcceptBtn').classList.remove('selected');
+    document.getElementById('reportRejectBtn').classList.remove('selected');
+    document.getElementById('reportSubmitBtn').disabled = true;
+  }
+  renderFlaggedSentencesPanel();
+  await renderReportView();
+
+  const statusById = await refreshReportSummary();
+  renderReportList(statusById);
+}
+
+async function renderReportView() {
+  if (reportViewMode === 'callout') {
+    await renderCalloutView();
+  } else {
+    renderParagraphView();
+  }
+}
+
+function renderParagraphView() {
+  const content = document.getElementById('reportViewerContent');
+  content.innerHTML = '';
+  if (currentReport.has_image) {
+    const img = document.createElement('img');
+    img.src = `/api/report/${currentReport.case_id}/image.png?t=${Date.now()}`;
+    content.appendChild(img);
+  }
+  const textDiv = document.createElement('div');
+  textDiv.id = 'sentenceContainer';
+  currentReport.sentences.forEach((sentence, i) => {
+    const span = document.createElement('span');
+    span.className = 'sentence';
+    span.textContent = sentence + ' ';
+    span.dataset.idx = i;
+    span.onclick = () => cycleSentenceFlag(i, sentence, span);
+    textDiv.appendChild(span);
+  });
+  content.appendChild(textDiv);
+  applyFlagStyles();
+}
+
+// Colors keyed by region name, matching LABEL_COLORS in physician_tool.py
+// (rendered as hex here since this is CSS/SVG, not a mask overlay).
+const CALLOUT_REGION_COLORS = {
+  lv_cavity: '#4a90d9',
+  myocardium: '#e2c34a',
+  infarct: '#e24a4a',
+  mvo: '#7ed957',
+};
+
+async function renderCalloutView() {
+  const content = document.getElementById('reportViewerContent');
+  content.innerHTML = '<div class="empty">Loading callouts...</div>';
+
+  if (!currentReport.has_image) {
+    content.innerHTML = '<div class="empty">No slice image available for this report, callout view needs one.</div>';
+    return;
+  }
+
+  const res = await fetch(`/api/report/${currentReport.case_id}/callouts`);
+  const data = await res.json();
+  if (data.error) {
+    content.innerHTML = `<div class="empty">Error loading callouts: ${data.error}</div>`;
+    return;
+  }
+  currentCallouts = data.callouts || [];
+
+  const wrap = document.createElement('div');
+  wrap.className = 'callout-wrap';
+  const img = document.createElement('img');
+  img.id = 'calloutImg';
+  img.src = `/api/report/${currentReport.case_id}/image.png?t=${Date.now()}`;
+  wrap.appendChild(img);
+
+  content.innerHTML = '';
+  content.appendChild(wrap);
+
+  const placed = currentCallouts.filter(c => c.x !== null && c.y !== null);
+  const unplaced = currentCallouts.filter(c => c.x === null || c.y === null);
+
+  img.onload = () => {
+    layoutCallouts(wrap, img, placed);
+  };
+  if (img.complete) layoutCallouts(wrap, img, placed);
+
+  if (unplaced.length > 0) {
+    const list = document.createElement('div');
+    list.className = 'callout-unplaced-list';
+    list.innerHTML = '<div class="field-label">Findings with no region match on this slice</div>' +
+      unplaced.map(c => `<div class="item">"${c.text}" <span class="sentence-tag-label">[${c.region}]</span></div>`).join('');
+    content.appendChild(list);
+  }
+}
+
+// Places callout boxes near each region's real centroid, alternating them
+// to the left/right of the image so they don't stack directly on top of
+// each other, then connects each box to its centroid with a line.
+function layoutCallouts(wrap, img, placed) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'callout-svg');
+  wrap.appendChild(svg);
+
+  const w = img.clientWidth, h = img.clientHeight;
+  const usedSlots = { left: 0, right: 0 };
+  const boxWidth = Math.min(220, w * 0.42);
+  const boxHeight = 84;
+
+  placed.forEach((c, i) => {
+    const color = CALLOUT_REGION_COLORS[c.region] || '#5b9bd5';
+    const cx = c.x * w, cy = c.y * h;
+
+    const marker = document.createElement('div');
+    marker.className = 'callout-marker';
+    marker.style.left = cx + 'px';
+    marker.style.top = cy + 'px';
+    marker.style.background = color;
+    wrap.appendChild(marker);
+
+    // callout goes on the OPPOSITE side of the image from its region, so the
+    // connecting line has room to run and the box doesn't sit on top of it
+    const side = cx < w / 2 ? 'right' : 'left';
+    const slot = usedSlots[side]++;
+    const boxLeft = side === 'right' ? w - boxWidth - 6 : 6;
+    const boxTop = Math.min(Math.max(slot * (boxHeight + 10) + 4, 4), Math.max(h - boxHeight - 4, 4));
+
+    const box = document.createElement('div');
+    box.className = 'callout-box';
+    box.contentEditable = 'true';
+    box.spellcheck = false;
+    box.style.left = boxLeft + 'px';
+    box.style.top = boxTop + 'px';
+    box.style.width = boxWidth + 'px';
+    box.style.borderLeftColor = color;
+    box.dataset.findingIdx = c.finding_index;
+
+    const label = document.createElement('span');
+    label.className = 'callout-region-label';
+    label.style.color = color;
+    label.textContent = c.region;
+    box.appendChild(label);
+
+    const textNode = document.createTextNode(
+      calloutEditsMap[c.finding_index] !== undefined ? calloutEditsMap[c.finding_index] : c.text
+    );
+    box.appendChild(textNode);
+
+    if (calloutEditsMap[c.finding_index] !== undefined) box.classList.add('edited');
+
+    box.addEventListener('input', () => {
+      const text = box.textContent.trim();
+      if (text === c.text) {
+        delete calloutEditsMap[c.finding_index];
+        box.classList.remove('edited');
+      } else {
+        calloutEditsMap[c.finding_index] = text;
+        box.classList.add('edited');
+      }
+    });
+
+    wrap.appendChild(box);
+
+    // connecting line, drawn after layout so box position is known
+    requestAnimationFrame(() => {
+      const boxRect = box.getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      const boxAnchorX = side === 'right' ? boxRect.left - wrapRect.left : boxRect.right - wrapRect.left;
+      const boxAnchorY = boxRect.top - wrapRect.top + boxRect.height / 2;
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', cx);
+      line.setAttribute('y1', cy);
+      line.setAttribute('x2', boxAnchorX);
+      line.setAttribute('y2', boxAnchorY);
+      line.setAttribute('stroke', color);
+      line.setAttribute('stroke-width', '1.5');
+      line.setAttribute('stroke-dasharray', '3,3');
+      svg.appendChild(line);
+    });
+  });
+}
+
+document.getElementById('paragraphViewToggle').onclick = () => {
+  reportViewMode = 'paragraph';
+  document.getElementById('paragraphViewToggle').classList.add('active');
+  document.getElementById('calloutViewToggle').classList.remove('active');
+  if (currentReport) renderReportView();
+};
+document.getElementById('calloutViewToggle').onclick = () => {
+  reportViewMode = 'callout';
+  document.getElementById('calloutViewToggle').classList.add('active');
+  document.getElementById('paragraphViewToggle').classList.remove('active');
+  if (currentReport) renderReportView();
+};
+
+function applyFlagStyles() {
+  document.querySelectorAll('#sentenceContainer .sentence').forEach(span => {
+    const idx = span.dataset.idx;
+    span.classList.remove('flag-incorrect', 'flag-hallucination');
+    if (flaggedMap[idx]) {
+      span.classList.add('flag-' + flaggedMap[idx].tag);
+    }
+  });
+}
+
+function cycleSentenceFlag(idx, sentenceText, span) {
+  // click cycles: unflagged -> incorrect -> hallucination -> unflagged
+  const current = flaggedMap[idx];
+  if (!current) {
+    flaggedMap[idx] = { tag: 'incorrect', note: '' };
+  } else if (current.tag === 'incorrect') {
+    flaggedMap[idx] = { tag: 'hallucination', note: current.note };
+  } else {
+    delete flaggedMap[idx];
+  }
+  applyFlagStyles();
+  renderFlaggedSentencesPanel();
+}
+
+function renderFlaggedSentencesPanel() {
+  const panel = document.getElementById('flaggedSentencesPanel');
+  const entries = Object.entries(flaggedMap);
+  if (entries.length === 0) {
+    panel.innerHTML = '';
+    return;
+  }
+  let html = '<label class="field-label">Flagged sentences</label>';
+  entries.forEach(([idx, info]) => {
+    const sentenceText = currentReport.sentences[idx];
+    html += `<div class="flag-note-box">
+      <div style="color:#ccc; margin-bottom:6px;">"${sentenceText}"</div>
+      <div class="sentence-tag-label">tag: ${info.tag}</div>
+      <input type="text" placeholder="note (optional)" value="${info.note || ''}"
+             onchange="flaggedMap[${idx}].note = this.value" />
+    </div>`;
+  });
+  panel.innerHTML = html;
+}
+
+document.getElementById('reportAcceptBtn').onclick = () => {
+  selectedReportDecision = 'accept';
+  document.getElementById('reportAcceptBtn').classList.add('selected');
+  document.getElementById('reportRejectBtn').classList.remove('selected');
+  document.getElementById('reportSubmitBtn').disabled = false;
+};
+document.getElementById('reportRejectBtn').onclick = () => {
+  selectedReportDecision = 'reject';
+  document.getElementById('reportRejectBtn').classList.add('selected');
+  document.getElementById('reportAcceptBtn').classList.remove('selected');
+  document.getElementById('reportSubmitBtn').disabled = false;
+};
+
+document.getElementById('reportSubmitBtn').onclick = async () => {
+  if (!currentReport || !selectedReportDecision) return;
+  const flagged_sentences = Object.entries(flaggedMap).map(([idx, info]) => ({
+    sentence_index: parseInt(idx),
+    text: currentReport.sentences[idx],
+    tag: info.tag,
+    note: info.note || '',
+  }));
+  const callout_edits = Object.entries(calloutEditsMap).map(([idx, text]) => ({
+    finding_index: parseInt(idx),
+    text,
+  }));
+  const res = await fetch('/api/validate_report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      case_id: currentReport.case_id,
+      decision: selectedReportDecision,
+      comment: document.getElementById('reportCommentBox').value,
+      flagged_sentences,
+      callout_edits,
+    }),
+  });
+  if (res.ok) {
+    document.getElementById('reportProgressNote').textContent = 'Saved.';
+    if (currentReportIdx + 1 < reports.length) {
+      selectReportByIndex(currentReportIdx + 1);
+    } else {
+      document.getElementById('reportViewerContent').innerHTML = '<div class="empty">All reports reviewed. Click any report on the left to revisit it.</div>';
+      const statusById = await refreshReportSummary();
+      renderReportList(statusById);
+    }
+  }
+};
+
+document.getElementById('exportReportsBtn').onclick = async () => {
+  const res = await fetch('/api/export_reports');
+  const data = await res.json();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `report_review_export_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('module2').style.display !== 'grid') return;
+  const tag = document.activeElement.tagName;
+  if (tag === 'TEXTAREA' || tag === 'INPUT') return;
+  if (!currentReport) return;
+
+  if (e.key === 'a' || e.key === 'A') {
+    document.getElementById('reportAcceptBtn').click();
+  } else if (e.key === 'r' || e.key === 'R') {
+    document.getElementById('reportRejectBtn').click();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    selectReportByIndex(currentReportIdx - 1);
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    selectReportByIndex(currentReportIdx + 1);
+  } else if (e.key === 'Enter') {
+    if (!document.getElementById('reportSubmitBtn').disabled) document.getElementById('reportSubmitBtn').click();
+  }
+});
 </script>
 </body>
 </html>

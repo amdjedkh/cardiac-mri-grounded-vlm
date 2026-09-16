@@ -1,30 +1,34 @@
 """
 build_patient_jsons.py
 
-Builds one real, verified patient JSON per selected case, using the
-now-fixed measurements.py + patient_schema.py.
+Builds one real, verified patient JSON per case, using the now-fixed
+measurements.py + patient_schema.py.
 
 Run from inside your EMIDEC root folder:
-    python build_patient_jsons.py
+    python build_patient_jsons.py              (all cases found)
+    python build_patient_jsons.py Case_P001 Case_N006   (just specific ones)
 
-Output: ./patients/<case_id>.json, one per selected case.
+Output: ./patients/<case_id>.json, one per case.
 """
 
 import os
+import sys
+import glob
 from measurements import extract_measurements
 from patient_schema import parse_emidec_clinical_txt, build_patient_record
 
-# Final 8-case selection, per the scan results.
-SELECTED_CASES = [
-    "Case_N006",  # normal
-    "Case_P055",  # smallest infarct
-    "Case_P019",  # largest infarct, also MVO-present
-    "Case_P060",  # mid-range infarct
-    "Case_P001",  # MVO present
-    "Case_P002",  # MVO present
-    "Case_P004",  # MVO absent
-    "Case_P007",  # MVO absent
-]
+
+def find_all_case_ids(root: str = ".") -> list:
+    """Discovers every real case by looking for <root>/Case_XXXX/Contours/
+    folders -- this is how we know a case is genuinely present and complete,
+    rather than assuming a fixed list. Works for both N (normal) and P
+    (pathological) cases."""
+    case_dirs = sorted(glob.glob(os.path.join(root, "Case_*")))
+    case_ids = []
+    for d in case_dirs:
+        if os.path.isdir(d) and os.path.isdir(os.path.join(d, "Contours")):
+            case_ids.append(os.path.basename(d))
+    return case_ids
 
 
 def build_one(case_id: str, root: str = "."):
@@ -46,11 +50,18 @@ def build_one(case_id: str, root: str = "."):
 if __name__ == "__main__":
     os.makedirs("patients", exist_ok=True)
 
-    print(f"Building {len(SELECTED_CASES)} patient records...\n")
-    for case_id in SELECTED_CASES:
+    case_ids = sys.argv[1:] if len(sys.argv) > 1 else find_all_case_ids()
+
+    print(f"Building {len(case_ids)} patient records...\n")
+    n_ok, n_failed = 0, 0
+    for case_id in case_ids:
+        out_path = os.path.join("patients", f"{case_id}.json")
+        if os.path.exists(out_path):
+            print(f"{case_id}: [SKIP] already done")
+            n_ok += 1
+            continue
         try:
             record = build_one(case_id)
-            out_path = os.path.join("patients", f"{case_id}.json")
             record.save(out_path)
             m = record.measurements
             print(
@@ -59,8 +70,11 @@ if __name__ == "__main__":
                 f"mvo={m['mvo_present']}, sex={record.clinical.sex}, "
                 f"age={record.clinical.age}  -> saved {out_path}"
             )
+            n_ok += 1
         except Exception as e:
             print(f"ERROR building {case_id}: {e}")
+            n_failed += 1
 
-    print("\nDone. Check the 'patients/' folder -- one JSON per case, ready for the")
+    print(f"\nDone. {n_ok} succeeded, {n_failed} failed, out of {len(case_ids)} total.")
+    print("Check the 'patients/' folder -- one JSON per case, ready for the")
     print("prompt scaffolds in prompts.py once overlay images are also in place.")
