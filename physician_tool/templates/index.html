@@ -303,9 +303,13 @@
     overflow-y: auto;
   }
   .report-viewer img {
+    display: block;
     max-width: 100%;
+    max-height: 65vh;
+    width: auto;
+    height: auto;
     border-radius: 6px;
-    margin-bottom: 20px;
+    margin: 0 auto 20px auto;
     background: #0d0e10;
   }
   .sentence {
@@ -371,17 +375,32 @@
     margin-bottom: 18px;
   }
 
+  .callout-center {
+    display: flex;
+    justify-content: center;
+  }
+  /* Fixed-size frame so every case -- whatever its native resolution or
+     aspect ratio (wide real whole-chest scans, square cropped synthetic
+     cases, tiny low-res arrays) -- occupies the same predictable box.
+     The image is laid out with object-fit:contain (scales up AND down,
+     never distorts), and callout math below computes the actual visible
+     sub-rect inside this frame to place markers/boxes/lines correctly
+     even when the image doesn't fill the frame exactly (letterboxing). */
   .callout-wrap {
     position: relative;
-    display: block;
     width: 100%;
     max-width: 900px;
-    margin: 0 auto;
+    height: 60vh;
+    min-height: 340px;
   }
   .callout-wrap img {
     display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: contain;
     border-radius: 6px;
     background: #0d0e10;
   }
@@ -969,15 +988,18 @@ async function renderCalloutView() {
   }
   currentCallouts = data.callouts || [];
 
+  const center = document.createElement('div');
+  center.className = 'callout-center';
   const wrap = document.createElement('div');
   wrap.className = 'callout-wrap';
   const img = document.createElement('img');
   img.id = 'calloutImg';
   img.src = `/api/report/${currentReport.case_id}/image.png?t=${Date.now()}`;
   wrap.appendChild(img);
+  center.appendChild(wrap);
 
   content.innerHTML = '';
-  content.appendChild(wrap);
+  content.appendChild(center);
 
   const placed = currentCallouts.filter(c => c.x !== null && c.y !== null);
   const unplaced = currentCallouts.filter(c => c.x === null || c.y === null);
@@ -996,6 +1018,24 @@ async function renderCalloutView() {
   }
 }
 
+// object-fit:contain puts the image's actual pixels in a sub-rect of the
+// frame, not the whole frame, whenever the frame's aspect ratio doesn't
+// match the image's own (true for almost every case here, since real
+// whole-chest scans and cropped/synthetic cases are different shapes).
+// Callout math needs that visible sub-rect, not the raw frame box, or
+// markers/lines land in the letterboxed empty space instead of on the
+// image content.
+function getContainRect(frameW, frameH, natW, natH) {
+  const frameAspect = frameW / frameH;
+  const imgAspect = natW / natH;
+  if (imgAspect > frameAspect) {
+    const rw = frameW, rh = frameW / imgAspect;
+    return { x: 0, y: (frameH - rh) / 2, w: rw, h: rh };
+  }
+  const rh = frameH, rw = frameH * imgAspect;
+  return { x: (frameW - rw) / 2, y: 0, w: rw, h: rh };
+}
+
 // Places callout boxes near each region's real centroid, alternating them
 // to the left/right of the image so they don't stack directly on top of
 // each other, then connects each box to its centroid with a line.
@@ -1004,14 +1044,17 @@ function layoutCallouts(wrap, img, placed) {
   svg.setAttribute('class', 'callout-svg');
   wrap.appendChild(svg);
 
-  const w = img.clientWidth, h = img.clientHeight;
+  const frameW = wrap.clientWidth, frameH = wrap.clientHeight;
+  const natW = img.naturalWidth || frameW, natH = img.naturalHeight || frameH;
+  const rect = getContainRect(frameW, frameH, natW, natH);
+
   const usedSlots = { left: 0, right: 0 };
-  const boxWidth = Math.min(220, w * 0.42);
+  const boxWidth = Math.min(220, rect.w * 0.42);
   const boxHeight = 84;
 
   placed.forEach((c, i) => {
     const color = CALLOUT_REGION_COLORS[c.region] || '#5b9bd5';
-    const cx = c.x * w, cy = c.y * h;
+    const cx = rect.x + c.x * rect.w, cy = rect.y + c.y * rect.h;
 
     const marker = document.createElement('div');
     marker.className = 'callout-marker';
@@ -1022,10 +1065,13 @@ function layoutCallouts(wrap, img, placed) {
 
     // callout goes on the OPPOSITE side of the image from its region, so the
     // connecting line has room to run and the box doesn't sit on top of it
-    const side = cx < w / 2 ? 'right' : 'left';
+    const side = cx < frameW / 2 ? 'right' : 'left';
     const slot = usedSlots[side]++;
-    const boxLeft = side === 'right' ? w - boxWidth - 6 : 6;
-    const boxTop = Math.min(Math.max(slot * (boxHeight + 10) + 4, 4), Math.max(h - boxHeight - 4, 4));
+    const boxLeft = side === 'right' ? rect.x + rect.w - boxWidth - 6 : rect.x + 6;
+    const boxTop = Math.min(
+      Math.max(rect.y + slot * (boxHeight + 10) + 4, rect.y + 4),
+      Math.max(rect.y + rect.h - boxHeight - 4, rect.y + 4)
+    );
 
     const box = document.createElement('div');
     box.className = 'callout-box';
