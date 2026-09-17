@@ -8,20 +8,30 @@ ad-hoc from a terminal and never saved, which is why "redeploying" did
 nothing (there was no file to redeploy). Reconstructed here from scratch
 and committed to the repo so this can't happen again.
 
-ASSUMES the following already exist on your Modal account, from the
-original deployment (these are account-level resources, independent of
-this file, so they should still exist even though the file was lost):
+Depends on the following pre-existing account-level Modal resources
+(confirmed against the real deployed objects, not assumed):
   - A volume named "physician-tool-data", containing (at its root):
-      real_cases/         (Case_* folders, each with Images/ + Contours/)
-      outputs_region_grounded/   (report JSONs)
-      overlays/           (rendered slice PNGs, Case_*/slice_NN_*.png)
+      real_cases/                (Case_* folders, each with Images/ + Contours/;
+                                   confirmed populated, 100 cases)
+      synthetic_cases/           (optional -- confirmed MISSING as of last
+                                   check; app handles this gracefully, Module 1
+                                   just shows zero synthetic cases)
+      outputs_region_grounded/   (report JSONs; confirmed populated, 100 files)
+      overlays/                  (rendered slice PNGs, Case_*/slice_NN_*.png;
+                                   confirmed populated, 100 cases)
   - A secret named "physician-tool-auth", containing two keys:
-      USERNAME and PASSWORD
+      BASIC_AUTH_USER and BASIC_AUTH_PASSWORD
+    (NOT "USERNAME"/"PASSWORD" -- an earlier reconstruction of this file
+    guessed those names, which deployed "successfully" but then crashed
+    every request with KeyError('USERNAME'), which looked like the app
+    hanging/infinite-loading in a browser rather than an obvious error.
+    Confirmed the real names via a read-only key-listing check against
+    the deployed secret, not by guessing again.)
 
-If either doesn't exist, this deploy will fail clearly (missing secret)
-or the app will start with zero cases found (missing/misnamed volume
-folders) -- in the latter case, run the "inspect volume contents" check
-below BEFORE assuming the code is wrong.
+If the volume or secret is missing entirely, this deploy will fail
+clearly. If the volume exists but folders are missing/misnamed, the app
+will silently start with zero cases -- run the "inspect volume contents"
+check below BEFORE assuming the code is wrong.
 
 Usage:
     modal deploy modal_physician_tool.py
@@ -99,8 +109,11 @@ def flask_app():
 
     import physician_tool as pt
 
-    username = os.environ["USERNAME"]
-    password = os.environ["PASSWORD"]
+    # confirmed via a read-only key-name check against the deployed secret
+    # (KeyError on first deploy showed the reconstructed guess was wrong):
+    # the actual keys are BASIC_AUTH_USER / BASIC_AUTH_PASSWORD
+    username = os.environ["BASIC_AUTH_USER"]
+    password = os.environ["BASIC_AUTH_PASSWORD"]
     return make_basic_auth_wsgi(pt.app.wsgi_app, username, password)
 
 
