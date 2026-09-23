@@ -1,20 +1,6 @@
 # Cardiac MRI Grounded VLM
 
-Research project at KAUST building a clinically grounded vision-language model for 3D cardiac MRI. Target venue: CVPR 2027 (MICCAI as a realistic backup). Supervisors: Dr. Karen Sanchez, Dr. Carlos Hinojosa, PI Prof. Bernard Ghanem.
 
-**Core idea:** a cardiac VLM whose reports are grounded in auditable quantitative measurements and cardiologist corrections. Investigating whether controlled synthetic 3D cardiac MRI can improve grounded report generation on unseen real patients.
-
-**Three hypotheses:**
-- **H1 (Grounding):** mask-derived quantitative measurements should improve clinical correctness and reduce unsupported statements vs. image-only generation.
-- **H2 (Expert supervision):** cardiologist-corrected reports should provide better supervision than unreviewed LLM-generated reports.
-- **H3 (Synthetic utility):** controlled synthetic 3D cardiac MRI should improve grounded report generation when appropriately filtered and mixed with real data.
-
-## Current direction (as of the latest supervisor meeting)
-
-The project is moving from a 2D proof-of-concept toward a proper 3D pipeline. Three parallel workstreams:
-1. **3D synthetic generation** — investigate methods that generate a full 3D volume with anatomically consistent slices, not independent 2D slices. Target: ~200 synthetic 3D cases for physician validation.
-2. **Physician evaluation tool** — a lightweight web tool (not CVAT-scale) for a cardiologist to review synthetic MRI/masks and generated reports, and produce a clean "accepted" dataset.
-3. **Report generation at scale** — generate Gemini reports for all real EMIDEC cases (currently blocked on confirming Gemini API credits with Carlos).
 
 ## Repo structure
 
