@@ -2,467 +2,546 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
 <title>Cardiac MRI Review</title>
+<script>
+  // Set the theme before first paint to avoid a flash. Saved choice wins,
+  // otherwise default to light.
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') {
+      t = 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
-  :root {
-    --bg: #14161a;
-    --panel: #1c1f25;
-    --border: #2c313a;
-    --text: #e8e9eb;
-    --text-dim: #9aa0ab;
-    --accent: #5b9bd5;
-    --accept: #3ba55c;
-    --reject: #d9534f;
-    --mono: "SF Mono", "Consolas", monospace;
+  :root, :root[data-theme="dark"] {
+    --bg: #0f1115;
+    --panel: #171a20;
+    --panel-2: #1e222a;
+    --border: #2a2f39;
+    --text: #e7e9ee;
+    --text-dim: #98a0ad;
+    --text-faint: #6b7380;
+    --accent: #6aa9e9;
+    --accent-soft: rgba(106,169,233,0.14);
+    --on-accent: #0b1220;
+    --accept: #3fb872;
+    --accept-soft: rgba(63,184,114,0.14);
+    --reject: #e5605c;
+    --reject-soft: rgba(229,96,92,0.14);
+    --on-solid: #07110b;
+    --warn: #d9a760;
+    --warn-soft: rgba(217,167,96,0.16);
+    --hover: rgba(255,255,255,0.05);
+    --active: rgba(255,255,255,0.08);
+    --image-bg: #08090b;
+    --flag-incorrect: rgba(229,96,92,0.30);
+    --flag-hallucination: rgba(217,167,96,0.34);
+    --shadow: 0 2px 10px rgba(0,0,0,0.45);
+    --mono: "SF Mono", "JetBrains Mono", "Consolas", monospace;
+    color-scheme: dark;
   }
+  :root[data-theme="light"] {
+    --bg: #f3f4f7;
+    --panel: #ffffff;
+    --panel-2: #f0f2f5;
+    --border: #dcdfe6;
+    --text: #1b1f27;
+    --text-dim: #566070;
+    --text-faint: #8a93a2;
+    --accent: #2563b0;
+    --accent-soft: rgba(37,99,176,0.10);
+    --on-accent: #ffffff;
+    --accept: #1c8a4a;
+    --accept-soft: rgba(28,138,74,0.11);
+    --reject: #c43c38;
+    --reject-soft: rgba(196,60,56,0.10);
+    --on-solid: #ffffff;
+    --warn: #a5681a;
+    --warn-soft: rgba(165,104,26,0.13);
+    --hover: rgba(15,23,42,0.05);
+    --active: rgba(15,23,42,0.08);
+    --image-bg: #0f1115;
+    --flag-incorrect: rgba(196,60,56,0.22);
+    --flag-hallucination: rgba(217,150,50,0.30);
+    --shadow: 0 2px 10px rgba(15,23,42,0.18);
+    color-scheme: light;
+  }
+
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    -webkit-text-size-adjust: 100%;
+    transition: background-color .2s, color .2s;
+  }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- App shell ---------- */
+  .app {
+    display: flex;
+    flex-direction: column;
     height: 100vh;
-    overflow: hidden;
+    height: 100dvh;
   }
-  .layout {
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 16px;
+    height: 52px;
+    flex: none;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 650;
+    font-size: 14.5px;
+    white-space: nowrap;
+  }
+  .brand-mark {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: var(--accent-soft);
+    color: var(--accent);
     display: grid;
-    grid-template-rows: auto 1fr;
-    grid-template-columns: 280px 1fr 340px;
-    height: calc(100vh - 44px);
+    place-items: center;
   }
-  .layout > .sidebar, .layout > .viewer, .layout > .review-panel, .layout > .report-viewer {
-    grid-row: 2;
+  .module-tabs {
+    display: flex;
+    gap: 4px;
+    height: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
+  .module-tabs::-webkit-scrollbar { display: none; }
+  .module-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    padding: 0 14px;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .module-tab:hover { color: var(--text); }
+  .module-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .icon-btn {
+    margin-left: auto;
+    flex: none;
+    width: 36px; height: 36px;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .icon-btn:hover { color: var(--text); background: var(--hover); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  #themeToggle .i-sun { display: none; }
+  :root[data-theme="light"] #themeToggle .i-sun { display: block; }
+  :root[data-theme="light"] #themeToggle .i-moon { display: none; }
+  #casesToggle { display: none; margin-left: 0; }
+
+  /* ---------- Module layout ---------- */
+  .layout {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-columns: 270px minmax(0, 1fr) 340px;
+  }
+  .layout > .sidebar, .layout > .viewer, .layout > .review-panel, .layout > .report-viewer { grid-row: 2; }
+  #module2 { display: none; }
+
+  .summary-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    padding: 10px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .pill b { color: var(--text); font-weight: 650; font-variant-numeric: tabular-nums; }
+  .pill.accepted b { color: var(--accept); }
+  .pill.rejected b { color: var(--reject); }
+  .shortcut-hint {
+    margin-left: 6px;
+    font-size: 11.5px;
+    color: var(--text-faint);
+  }
+  kbd {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 1px 5px;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--panel);
+    color: var(--text-dim);
+  }
+  .export-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .export-btn:hover { border-color: var(--accent); color: var(--text); }
+
+  /* ---------- Sidebar ---------- */
   .sidebar {
     background: var(--panel);
     border-right: 1px solid var(--border);
-    padding: 20px;
+    padding: 14px 10px;
     overflow-y: auto;
   }
-  .sidebar h1 {
-    font-size: 15px;
-    font-weight: 600;
-    margin: 0 0 4px 0;
-  }
-  .sidebar .subtitle {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-bottom: 20px;
-  }
-  .case-list-item {
+  .sidebar-head { padding: 0 8px 12px; }
+  .sidebar h1 { font-size: 13px; font-weight: 650; margin: 0; }
+  .sidebar .subtitle { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .case-list-item, .report-list-item {
     padding: 9px 10px;
-    border-radius: 5px;
+    border-radius: 8px;
     font-size: 13px;
     cursor: pointer;
     margin-bottom: 2px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     color: var(--text-dim);
+    min-height: 38px;
   }
-  .case-list-item:hover { background: #23262d; }
-  .case-list-item.active { background: #262b35; color: var(--text); }
+  .case-list-item:hover, .report-list-item:hover { background: var(--hover); }
+  .case-list-item.active, .report-list-item.active { background: var(--active); color: var(--text); }
+  .case-list-item > span:first-child { display: flex; align-items: center; min-width: 0; }
   .case-list-item .tag {
     font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 3px;
-    background: #333844;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--panel-2);
     color: var(--text-dim);
+    border: 1px solid var(--border);
   }
-  .case-list-item .tag.synthetic { background: #3a2d1f; color: #d9a760; }
-  .case-list-item.status-pending { color: var(--text-dim); }
-  .case-list-item.status-accepted { color: var(--accept); }
-  .case-list-item.status-rejected { color: var(--reject); }
-  .report-list-item.status-pending { color: var(--text-dim); }
-  .report-list-item.status-accepted { color: var(--accept); }
-  .report-list-item.status-rejected { color: var(--reject); }
+  .case-list-item .tag.synthetic { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
   .status-dot {
-    width: 7px;
-    height: 7px;
+    width: 8px; height: 8px;
     border-radius: 50%;
     display: inline-block;
-    margin-right: 8px;
-    background: #555;
+    margin-right: 10px;
+    flex: none;
+    background: var(--text-faint);
   }
   .status-accepted .status-dot { background: var(--accept); }
   .status-rejected .status-dot { background: var(--reject); }
+  .backdrop { display: none; }
 
-  .summary-bar {
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    padding: 10px 20px;
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    font-size: 12.5px;
-    grid-column: 1 / -1;
-  }
-  .summary-bar .stat { color: var(--text-dim); }
-  .summary-bar .stat b { color: var(--text); font-weight: 600; }
-  .summary-bar .stat.accepted b { color: var(--accept); }
-  .summary-bar .stat.rejected b { color: var(--reject); }
-  .export-btn {
-    margin-left: auto;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 6px 12px;
-    border-radius: 5px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .export-btn:hover { border-color: var(--accent); color: var(--text); }
-  .shortcut-hint {
-    font-size: 11px;
-    color: #555;
-    font-family: var(--mono);
-  }
-
+  /* ---------- Viewer ---------- */
   .viewer {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    position: relative;
+    padding: 16px;
+    min-width: 0;
+    overflow: auto;
   }
   .viewer img {
-    max-height: 78vh;
-    max-width: 90%;
-    border-radius: 4px;
-    background: #0d0e10;
+    max-height: calc(100vh - 250px);
+    max-height: calc(100dvh - 250px);
+    max-width: 100%;
+    display: block;
+    border-radius: 8px;
+    background: var(--image-bg);
   }
-  .viewer .empty {
+  .empty {
     color: var(--text-dim);
     font-size: 14px;
+    text-align: center;
+    padding: 24px;
   }
+  .canvas-wrap { position: relative; display: inline-block; max-width: 100%; line-height: 0; }
+  .bbox-canvas { position: absolute; top: 0; left: 0; touch-action: pan-y; }
+  .bbox-canvas.drawing-enabled { cursor: crosshair; touch-action: none; }
   .slice-controls {
-    margin-top: 16px;
+    margin-top: 14px;
     display: flex;
     align-items: center;
     gap: 14px;
-    width: 90%;
+    width: 100%;
     max-width: 480px;
   }
-  .slice-controls input[type="range"] {
-    flex: 1;
-    accent-color: var(--accent);
-  }
+  .slice-controls input[type="range"] { flex: 1; accent-color: var(--accent); height: 28px; }
   .slice-controls .slice-label {
     font-family: var(--mono);
     font-size: 12px;
     color: var(--text-dim);
-    min-width: 60px;
+    min-width: 64px;
     text-align: center;
   }
-  .toggle-row {
-    margin-top: 12px;
-    display: flex;
-    gap: 8px;
-  }
+  .toggle-row, .view-toggle-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .view-toggle-row { margin: 0 0 16px; }
   .toggle-btn {
-    background: #23262d;
+    background: var(--panel);
     border: 1px solid var(--border);
     color: var(--text-dim);
-    padding: 6px 14px;
-    border-radius: 5px;
-    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
     cursor: pointer;
   }
-  .toggle-btn.active {
-    background: var(--accent);
-    color: #0d0e10;
-    border-color: var(--accent);
-  }
+  .toggle-btn:hover { color: var(--text); }
+  .toggle-btn.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 
+  /* ---------- Review panel ---------- */
   .review-panel {
     background: var(--panel);
     border-left: 1px solid var(--border);
-    padding: 20px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
   }
-  .review-panel h2 {
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: none;
-    color: var(--text-dim);
-    margin: 0 0 14px 0;
-  }
+  .review-panel h2 { font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); margin: 0 0 12px; }
   .case-meta {
-    font-family: var(--mono);
-    font-size: 12px;
+    display: grid;
+    gap: 6px;
+    font-size: 12.5px;
     color: var(--text-dim);
-    line-height: 1.7;
-    margin-bottom: 18px;
-    padding-bottom: 18px;
-    border-bottom: 1px solid var(--border);
-  }
-  .decision-row {
-    display: flex;
-    gap: 8px;
     margin-bottom: 16px;
+    padding: 12px;
+    background: var(--panel-2);
+    border-radius: 10px;
   }
+  .case-meta .row { display: flex; justify-content: space-between; gap: 12px; }
+  .case-meta .row b { color: var(--text); font-weight: 550; font-family: var(--mono); font-size: 12px; text-align: right; overflow-wrap: anywhere; }
+  .decision-row { display: flex; gap: 8px; margin-bottom: 16px; }
   .decision-btn {
     flex: 1;
-    padding: 11px;
-    border-radius: 6px;
+    padding: 12px;
+    border-radius: 10px;
     border: 1.5px solid var(--border);
     background: transparent;
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .decision-btn.accept.selected { background: var(--accept); border-color: var(--accept); }
-  .decision-btn.reject.selected { background: var(--reject); border-color: var(--reject); }
-
-  label.field-label {
-    font-size: 12px;
-    color: var(--text-dim);
-    display: block;
-    margin-bottom: 6px;
-  }
-  textarea {
-    width: 100%;
-    min-height: 110px;
-    background: #14161a;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    padding: 10px;
-    font-size: 13px;
-    font-family: inherit;
-    resize: vertical;
-    margin-bottom: 16px;
-  }
-  .bbox-hint {
-    font-size: 11.5px;
-    color: var(--text-dim);
-    margin-bottom: 16px;
-    line-height: 1.5;
-  }
-  .bbox-status {
-    font-family: var(--mono);
-    font-size: 11.5px;
-    color: var(--accent);
-    margin-bottom: 16px;
-  }
-  .submit-btn {
-    margin-top: auto;
-    background: var(--accent);
-    color: #0d0e10;
-    border: none;
-    padding: 13px;
-    border-radius: 6px;
     font-size: 13.5px;
     font-weight: 600;
     cursor: pointer;
+    transition: background-color .12s, border-color .12s, color .12s;
   }
-  .submit-btn:disabled {
-    background: #333844;
-    color: var(--text-dim);
-    cursor: not-allowed;
+  .decision-btn.accept { color: var(--accept); }
+  .decision-btn.reject { color: var(--reject); }
+  .decision-btn.accept:hover { background: var(--accept-soft); border-color: var(--accept); }
+  .decision-btn.reject:hover { background: var(--reject-soft); border-color: var(--reject); }
+  .decision-btn.accept.selected { background: var(--accept); border-color: var(--accept); color: var(--on-solid); }
+  .decision-btn.reject.selected { background: var(--reject); border-color: var(--reject); color: var(--on-solid); }
+
+  label.field-label { font-size: 12px; color: var(--text-dim); display: block; margin-bottom: 6px; font-weight: 550; }
+  textarea, .flag-note-box input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
   }
-  .progress-note {
-    font-size: 11.5px;
-    color: var(--text-dim);
-    margin-top: 10px;
-    text-align: center;
-  }
-  .module-tabs {
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 4px;
-    padding: 0 20px;
-    height: 44px;
-    align-items: flex-end;
-  }
-  .module-tab {
-    background: none;
+  textarea { min-height: 100px; resize: vertical; margin-bottom: 16px; }
+  textarea:focus, .flag-note-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .bbox-hint { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; line-height: 1.5; }
+  .bbox-status { font-family: var(--mono); font-size: 11.5px; color: var(--accent); margin-bottom: 12px; }
+  .bbox-status:empty { display: none; }
+  .submit-btn {
+    margin-top: auto;
+    background: var(--accent);
+    color: var(--on-accent);
     border: none;
-    color: var(--text-dim);
-    padding: 12px 18px;
-    font-size: 13px;
+    padding: 13px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
   }
-  .module-tab.active {
-    color: var(--text);
-    border-bottom-color: var(--accent);
-  }
-  #module2 { display: none; }
-  .report-layout {
-    display: grid;
-    grid-template-columns: 1fr 380px;
-    height: calc(100vh - 90px);
-  }
-  .report-viewer {
-    padding: 24px;
-    overflow-y: auto;
-  }
-  .report-viewer img {
-    max-width: 100%;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    background: #0d0e10;
-  }
-  .sentence {
-    padding: 3px 4px;
-    border-radius: 4px;
-    cursor: pointer;
-    line-height: 1.8;
-  }
-  .sentence:hover { background: #23262d; }
-  .sentence.flag-incorrect { background: rgba(217,83,79,0.28); }
-  .sentence.flag-hallucination { background: rgba(217,152,79,0.32); }
-  .sentence-tag-label {
-    font-size: 10px;
-    font-family: var(--mono);
-    color: var(--text-dim);
-    margin-left: 6px;
-  }
-  .report-list-item {
-    padding: 9px 10px;
-    border-radius: 5px;
-    font-size: 13px;
-    cursor: pointer;
-    margin-bottom: 2px;
-    color: var(--text-dim);
-    display: flex;
-    align-items: center;
-  }
-  .report-list-item:hover { background: #23262d; }
-  .report-list-item.active { background: #262b35; color: var(--text); }
+  .submit-btn:hover:not(:disabled) { filter: brightness(1.08); }
+  .submit-btn:disabled { background: var(--panel-2); color: var(--text-faint); cursor: not-allowed; }
+  .progress-note { font-size: 12px; color: var(--text-dim); margin-top: 10px; text-align: center; min-height: 1em; }
+
+  /* ---------- Report review ---------- */
+  .report-viewer { padding: 20px; overflow-y: auto; min-width: 0; }
+  .report-viewer img { max-width: 100%; border-radius: 8px; margin-bottom: 18px; background: var(--image-bg); }
+  #sentenceContainer { max-width: 760px; font-size: 15px; }
+  .sentence { padding: 3px 4px; border-radius: 4px; cursor: pointer; line-height: 1.85; }
+  .sentence:hover { background: var(--hover); }
+  .sentence.flag-incorrect { background: var(--flag-incorrect); }
+  .sentence.flag-hallucination { background: var(--flag-hallucination); }
+  .sentence-tag-label { font-size: 10.5px; font-family: var(--mono); color: var(--text-dim); margin-left: 6px; }
   .flag-note-box {
-    background: var(--panel);
+    background: var(--panel-2);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 10px;
     padding: 12px;
-    margin-top: 14px;
+    margin: 0 0 10px;
     font-size: 12.5px;
   }
-  .flag-note-box select, .flag-note-box input {
-    width: 100%;
-    background: #14161a;
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 6px;
-    border-radius: 4px;
-    margin-top: 4px;
-    margin-bottom: 8px;
-    font-size: 12.5px;
-  }
-  .canvas-wrap {
-    position: relative;
-    display: inline-block;
-  }
-  .bbox-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    cursor: crosshair;
-  }
+  .flag-note-box .flag-text { color: var(--text); margin-bottom: 6px; line-height: 1.5; }
+  .flag-note-box input { margin-top: 6px; padding: 8px; font-size: 13px; }
 
-  .view-toggle-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 18px;
-  }
-
-  .callout-wrap {
-    position: relative;
-    display: block;
-    width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-  .callout-wrap img {
-    display: block;
-    width: 100%;
-    height: auto;
-    border-radius: 6px;
-    background: #0d0e10;
-  }
-  .callout-svg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    overflow: visible;
-  }
+  .callout-wrap { position: relative; display: block; width: 100%; max-width: 900px; margin: 0 auto; }
+  .callout-wrap img { display: block; width: 100%; height: auto; border-radius: 8px; margin: 0; background: var(--image-bg); }
+  .callout-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
   .callout-marker {
     position: absolute;
-    width: 10px;
-    height: 10px;
+    width: 12px; height: 12px;
     border-radius: 50%;
     border: 2px solid #0d0e10;
     transform: translate(-50%, -50%);
   }
   .callout-box {
     position: absolute;
-    box-sizing: border-box;
     background: var(--panel);
-    border: 1.5px solid var(--border);
+    border: 1px solid var(--border);
     border-left-width: 4px;
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 8px 10px;
     font-size: 12px;
     line-height: 1.45;
     color: var(--text);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    box-shadow: var(--shadow);
     pointer-events: auto;
     cursor: text;
   }
-  .callout-box:focus {
-    outline: 2px solid var(--accent);
-  }
-  .callout-box.edited {
-    box-shadow: 0 0 0 1.5px var(--accent), 0 2px 10px rgba(0,0,0,0.4);
-  }
+  .callout-box:focus { outline: 2px solid var(--accent); }
+  .callout-box.edited { box-shadow: 0 0 0 1.5px var(--accent), var(--shadow); }
   .callout-region-label {
     display: block;
     font-size: 9.5px;
     font-family: var(--mono);
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    opacity: 0.65;
+    letter-spacing: .04em;
+    font-weight: 650;
     margin-bottom: 3px;
   }
-  .callout-unplaced-list {
-    margin-top: 16px;
-    font-size: 12px;
-    color: var(--text-dim);
+  .callout-unplaced-list { margin-top: 16px; font-size: 12.5px; color: var(--text-dim); max-width: 900px; margin-inline: auto; }
+  .callout-unplaced-list .item { padding: 8px 0; border-top: 1px solid var(--border); }
+
+  /* ---------- Tablet: sidebar becomes a slide-in drawer ---------- */
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: minmax(0, 1fr) 320px; }
+    #casesToggle { display: grid; }
+    .layout > .sidebar {
+      position: fixed;
+      z-index: 40;
+      top: 0; left: 0; bottom: 0;
+      width: min(300px, 86vw);
+      transform: translateX(-100%);
+      transition: transform .22s ease;
+      box-shadow: var(--shadow);
+      padding-top: 16px;
+    }
+    .layout.drawer-open > .sidebar { transform: none; }
+    .layout.drawer-open > .backdrop {
+      display: block;
+      position: fixed;
+      z-index: 30;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+    }
+    .shortcut-hint { display: none; }
   }
-  .callout-unplaced-list .item {
-    padding: 6px 0;
-    border-top: 1px solid var(--border);
+
+  /* ---------- Phone: single scrolling column ---------- */
+  @media (max-width: 760px) {
+    html, body { height: auto; }
+    .app { height: auto; min-height: 100vh; min-height: 100dvh; }
+    .topbar { position: sticky; top: 0; z-index: 20; gap: 8px; padding: 0 10px; }
+    .brand-name { display: none; }
+    .layout { display: block; }
+    .summary-bar { padding: 8px 12px; }
+    .summary-bar .export-btn { margin-left: 0; width: 100%; }
+    .viewer { padding: 12px; overflow: visible; }
+    .viewer img { max-height: 62vh; }
+    .review-panel { border-left: none; border-top: 1px solid var(--border); overflow: visible; }
+    .report-viewer { padding: 14px 12px; overflow: visible; }
+    .submit-btn { margin-top: 8px; position: sticky; bottom: 10px; box-shadow: var(--shadow); }
+    .decision-btn, .toggle-btn { min-height: 44px; }
+    textarea, .flag-note-box input { font-size: 16px; } /* stops iOS zoom on focus */
+    #sentenceContainer { font-size: 15px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
   }
 </style>
 </head>
 <body>
+<div class="app">
 
-<div class="module-tabs">
-  <button class="module-tab active" id="tabModule1">Image &amp; Mask Review</button>
-  <button class="module-tab" id="tabModule2">Report Review</button>
-</div>
+<header class="topbar">
+  <button class="icon-btn" id="casesToggle" aria-label="Show case list" title="Cases">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div class="brand">
+    <span class="brand-mark">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
+    </span>
+    <span class="brand-name">Cardiac MRI Review</span>
+  </div>
+  <nav class="module-tabs">
+    <button class="module-tab active" id="tabModule1">Images &amp; Masks</button>
+    <button class="module-tab" id="tabModule2">Reports</button>
+  </nav>
+  <button class="icon-btn" id="themeToggle" aria-label="Toggle light/dark theme" title="Toggle theme">
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+  </button>
+</header>
 
 <div class="layout" id="module1">
   <div class="summary-bar">
-    <span class="stat">Total: <b id="statTotal">0</b></span>
-    <span class="stat accepted">Accepted: <b id="statAccepted">0</b></span>
-    <span class="stat rejected">Rejected: <b id="statRejected">0</b></span>
-    <span class="shortcut-hint">A accept &middot; R reject &middot; &#8592;&#8594; slice &middot; &#8593;&#8595; case</span>
+    <span class="pill">Total <b id="statTotal">0</b></span>
+    <span class="pill accepted">Accepted <b id="statAccepted">0</b></span>
+    <span class="pill rejected">Rejected <b id="statRejected">0</b></span>
+    <span class="shortcut-hint"><kbd>A</kbd> accept &middot; <kbd>R</kbd> reject &middot; <kbd>&larr;</kbd><kbd>&rarr;</kbd> slice &middot; <kbd>&uarr;</kbd><kbd>&darr;</kbd> case</span>
     <button class="export-btn" id="exportBtn">Export accepted dataset</button>
   </div>
   <div class="sidebar">
-    <h1>Cardiac MRI Review</h1>
-    <div class="subtitle">Image validation</div>
+    <div class="sidebar-head">
+      <h1>Cases</h1>
+      <div class="subtitle">Image validation</div>
+    </div>
     <div id="caseList"></div>
   </div>
+  <div class="backdrop"></div>
 
   <div class="viewer">
     <div id="viewerContent">
@@ -470,7 +549,7 @@
     </div>
     <div class="slice-controls" id="sliceControls" style="display:none;">
       <span class="slice-label" id="sliceLabel">1 / 1</span>
-      <input type="range" id="sliceSlider" min="0" max="0" value="0">
+      <input type="range" id="sliceSlider" min="0" max="0" value="0" aria-label="Slice">
     </div>
     <div class="toggle-row" id="toggleRow" style="display:none;">
       <button class="toggle-btn active" id="maskToggle">Show mask</button>
@@ -487,10 +566,10 @@
       <button class="decision-btn reject" id="rejectBtn">Reject</button>
     </div>
 
-    <label class="field-label">Observations / comments</label>
+    <label class="field-label" for="commentBox">Observations / comments</label>
     <textarea id="commentBox" placeholder="Anything worth noting about this case..."></textarea>
 
-    <div class="bbox-hint">Click "Mark region" then click and drag on the image to flag a specific area, optional.</div>
+    <div class="bbox-hint">Click &ldquo;Mark region&rdquo;, then drag on the image to flag a specific area (optional).</div>
     <div class="bbox-status" id="bboxStatus"></div>
 
     <button class="submit-btn" id="submitBtn" disabled>Save and next case</button>
@@ -500,17 +579,20 @@
 
 <div class="layout" id="module2">
   <div class="summary-bar">
-    <span class="stat">Total: <b id="statTotal2">0</b></span>
-    <span class="stat accepted">Accepted: <b id="statAccepted2">0</b></span>
-    <span class="stat rejected">Rejected: <b id="statRejected2">0</b></span>
-    <span class="shortcut-hint">Click any sentence to flag it &middot; A accept &middot; R reject &middot; &#8593;&#8595; case</span>
-    <button class="export-btn" id="exportReportsBtn">Export flagged sentences + accepted</button>
+    <span class="pill">Total <b id="statTotal2">0</b></span>
+    <span class="pill accepted">Accepted <b id="statAccepted2">0</b></span>
+    <span class="pill rejected">Rejected <b id="statRejected2">0</b></span>
+    <span class="shortcut-hint">Click a sentence to flag it &middot; <kbd>A</kbd> accept &middot; <kbd>R</kbd> reject &middot; <kbd>&uarr;</kbd><kbd>&darr;</kbd> case</span>
+    <button class="export-btn" id="exportReportsBtn">Export flagged + accepted</button>
   </div>
   <div class="sidebar">
-    <h1>Cardiac MRI Review</h1>
-    <div class="subtitle">Report validation</div>
+    <div class="sidebar-head">
+      <h1>Reports</h1>
+      <div class="subtitle">Report validation</div>
+    </div>
     <div id="reportList"></div>
   </div>
+  <div class="backdrop"></div>
 
   <div class="report-viewer">
     <div class="view-toggle-row">
@@ -531,7 +613,7 @@
       <button class="decision-btn reject" id="reportRejectBtn">Reject</button>
     </div>
 
-    <label class="field-label">Overall observations / comments</label>
+    <label class="field-label" for="reportCommentBox">Overall observations / comments</label>
     <textarea id="reportCommentBox" placeholder="Anything worth noting about this report..."></textarea>
 
     <div id="flaggedSentencesPanel"></div>
@@ -541,6 +623,7 @@
   </div>
 </div>
 
+</div>
 <script>
 let cases = [];
 let currentCase = null;
@@ -551,6 +634,37 @@ let showMask = true;
 let bboxMode = false;
 let currentBbox = null;
 let statusById = {};
+
+function esc(v) {
+  return String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function metaRows(rows) {
+  return rows.map(([k, v]) => `<div class="row"><span>${k}</span><b>${esc(v)}</b></div>`).join('');
+}
+
+// ---- Theme ----
+document.getElementById('themeToggle').onclick = () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('theme', next); } catch (e) {}
+};
+
+// ---- Case-list drawer (tablet / phone) ----
+function visibleModule() {
+  return document.getElementById('module2').style.display === 'grid'
+    ? document.getElementById('module2') : document.getElementById('module1');
+}
+function setDrawer(open) {
+  document.querySelectorAll('.layout').forEach(l => l.classList.remove('drawer-open'));
+  if (open) visibleModule().classList.add('drawer-open');
+}
+document.getElementById('casesToggle').onclick = () =>
+  setDrawer(!visibleModule().classList.contains('drawer-open'));
+document.querySelectorAll('.backdrop').forEach(b => b.onclick = () => setDrawer(false));
+document.querySelectorAll('.sidebar').forEach(sb => sb.addEventListener('click', e => {
+  if (e.target.closest('.case-list-item, .report-list-item')) setDrawer(false);
+}));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') setDrawer(false); });
 
 async function refreshSummary() {
   const res = await fetch('/api/summary');
@@ -578,7 +692,7 @@ function renderCaseList() {
     const div = document.createElement('div');
     div.className = 'case-list-item status-' + status;
     if (currentCase && currentCase.id === c.id) div.classList.add('active');
-    div.innerHTML = `<span><span class="status-dot"></span>${c.id}</span><span class="tag ${c.type}">${c.type}</span>`;
+    div.innerHTML = `<span><span class="status-dot"></span>${esc(c.id)}</span><span class="tag ${esc(c.type)}">${esc(c.type)}</span>`;
     div.onclick = () => selectCaseByIndex(i);
     list.appendChild(div);
   });
@@ -603,7 +717,7 @@ async function selectCaseByIndex(idx) {
   currentSliceIdx = Math.floor(nSlices / 2);
 
   document.getElementById('caseMeta').innerHTML =
-    `case: ${info.case_id}<br>type: ${info.case_type}<br>slices: ${info.n_slices}<br>shape: ${info.shape.join(' x ')}`;
+    metaRows([['case', info.case_id], ['type', info.case_type], ['slices', info.n_slices], ['shape', info.shape.join(' x ')]]);
 
   document.getElementById('sliceControls').style.display = 'flex';
   document.getElementById('toggleRow').style.display = 'flex';
@@ -669,30 +783,31 @@ function setupBboxDrawing(canvas) {
   const ctx = canvas.getContext('2d');
   let drawing = false;
   let startX, startY;
+  canvas.classList.toggle('drawing-enabled', bboxMode);
 
-  canvas.onmousedown = (e) => {
-    if (!bboxMode) return;
+  const pos = (e) => {
     const rect = canvas.getBoundingClientRect();
-    startX = e.clientX - rect.left;
-    startY = e.clientY - rect.top;
-    drawing = true;
+    return [e.clientX - rect.left, e.clientY - rect.top];
   };
-  canvas.onmousemove = (e) => {
+
+  canvas.onpointerdown = (e) => {
+    if (!bboxMode) return;
+    [startX, startY] = pos(e);
+    drawing = true;
+    canvas.setPointerCapture(e.pointerId);
+  };
+  canvas.onpointermove = (e) => {
     if (!drawing) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const [x, y] = pos(e);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#5b9bd5';
+    ctx.strokeStyle = '#6aa9e9';
     ctx.lineWidth = 2;
     ctx.strokeRect(startX, startY, x - startX, y - startY);
   };
-  canvas.onmouseup = (e) => {
+  canvas.onpointerup = (e) => {
     if (!drawing) return;
     drawing = false;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const [x, y] = pos(e);
     currentBbox = {
       x: Math.min(startX, x) / canvas.width,
       y: Math.min(startY, y) / canvas.height,
@@ -702,6 +817,7 @@ function setupBboxDrawing(canvas) {
     document.getElementById('bboxStatus').textContent =
       `Region marked at (${currentBbox.x.toFixed(2)}, ${currentBbox.y.toFixed(2)})`;
   };
+  canvas.onpointercancel = () => { drawing = false; };
 }
 
 document.getElementById('sliceSlider').addEventListener('input', (e) => {
@@ -718,6 +834,8 @@ document.getElementById('maskToggle').onclick = () => {
 document.getElementById('bboxToggle').onclick = () => {
   bboxMode = !bboxMode;
   document.getElementById('bboxToggle').classList.toggle('active', bboxMode);
+  const c = document.getElementById('bboxCanvas');
+  if (c) c.classList.toggle('drawing-enabled', bboxMode);
 };
 
 let selectedDecision = null;
@@ -784,6 +902,7 @@ document.addEventListener('keydown', (e) => {
   const tag = document.activeElement.tagName;
   if (tag === 'TEXTAREA' || tag === 'INPUT') return; // don't hijack typing
   if (!currentCase) return;
+  if (document.getElementById('module1').style.display === 'none') return;
 
   if (e.key === 'a' || e.key === 'A') {
     document.getElementById('acceptBtn').click();
@@ -808,12 +927,14 @@ loadCases();
 
 // ---- Module tab switching ----
 document.getElementById('tabModule1').onclick = () => {
+  setDrawer(false);
   document.getElementById('module1').style.display = 'grid';
   document.getElementById('module2').style.display = 'none';
   document.getElementById('tabModule1').classList.add('active');
   document.getElementById('tabModule2').classList.remove('active');
 };
 document.getElementById('tabModule2').onclick = () => {
+  setDrawer(false);
   document.getElementById('module1').style.display = 'none';
   document.getElementById('module2').style.display = 'grid';
   document.getElementById('tabModule1').classList.remove('active');
@@ -859,7 +980,7 @@ function renderReportList(statusById) {
     const div = document.createElement('div');
     div.className = 'report-list-item status-' + status;
     if (currentReport && currentReport.case_id === r.id) div.classList.add('active');
-    div.innerHTML = `<span class="status-dot"></span>${r.id}`;
+    div.innerHTML = `<span class="status-dot"></span>${esc(r.id)}`;
     div.onclick = () => selectReportByIndex(i);
     list.appendChild(div);
   });
@@ -884,7 +1005,7 @@ async function selectReportByIndex(idx) {
   document.getElementById('reportCommentBox').value = '';
 
   document.getElementById('reportMeta').innerHTML =
-    `case: ${data.case_id}<br>model: ${data.model}<br>${data.sentences.length} sentences`;
+    metaRows([['case', data.case_id], ['model', data.model], ['sentences', data.sentences.length]]);
 
   // pre-fill if this report was already reviewed, so revisiting works the same way as Module 1
   const latestRes = await fetch(`/api/report/${r.id}/latest`);
@@ -1130,9 +1251,9 @@ function renderFlaggedSentencesPanel() {
   entries.forEach(([idx, info]) => {
     const sentenceText = currentReport.sentences[idx];
     html += `<div class="flag-note-box">
-      <div style="color:#ccc; margin-bottom:6px;">"${sentenceText}"</div>
+      <div class="flag-text">"${esc(sentenceText)}"</div>
       <div class="sentence-tag-label">tag: ${info.tag}</div>
-      <input type="text" placeholder="note (optional)" value="${info.note || ''}"
+      <input type="text" placeholder="note (optional)" value="${esc(info.note || '')}"
              onchange="flaggedMap[${idx}].note = this.value" />
     </div>`;
   });
@@ -1218,6 +1339,26 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === 'Enter') {
     if (!document.getElementById('reportSubmitBtn').disabled) document.getElementById('reportSubmitBtn').click();
   }
+});
+
+// ---- Keep canvas / callouts aligned when the viewport changes ----
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const img = document.getElementById('sliceImg');
+    const canvas = document.getElementById('bboxCanvas');
+    if (img && canvas && img.clientWidth) {
+      canvas.width = img.clientWidth;
+      canvas.height = img.clientHeight;
+      canvas.style.width = img.clientWidth + 'px';
+      canvas.style.height = img.clientHeight + 'px';
+    }
+    if (currentReport && reportViewMode === 'callout' &&
+        document.getElementById('module2').style.display === 'grid') {
+      renderCalloutView();
+    }
+  }, 150);
 });
 </script>
 </body>
