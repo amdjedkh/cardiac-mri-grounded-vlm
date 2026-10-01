@@ -425,56 +425,41 @@
   .flag-note-box .flag-text { color: var(--text); margin-bottom: 6px; line-height: 1.5; }
   .flag-note-box input { margin-top: 6px; padding: 8px; font-size: 13px; }
 
-  .callout-center { display: flex; justify-content: center; }
-  /* Fixed-size frame so every case, whatever its resolution or aspect ratio,
-     occupies the same box. The image uses object-fit:contain and the callout
-     math below works out the visible sub-rect, so markers and lines land on
-     the image content rather than in letterboxed space. */
-  .callout-wrap { position: relative; width: 100%; max-width: 900px; height: 60vh; min-height: 340px; }
-  .callout-wrap img {
-    display: block;
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    max-height: none;
-    object-fit: contain;
-    border-radius: 8px;
-    margin: 0;
-    background: var(--image-bg);
-  }
-  .callout-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-  .callout-marker {
-    position: absolute;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    border: 2px solid #0d0e10;
-    transform: translate(-50%, -50%);
+  /* Callout view: findings sit in a horizontal row of cards above the image,
+     colour-coded by region. The image itself stays clean. */
+  .callout-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+    max-width: 900px;
+    margin: 0 auto 16px;
   }
   .callout-box {
-    position: absolute;
     background: var(--panel);
     border: 1px solid var(--border);
-    border-left-width: 4px;
-    border-radius: 8px;
-    padding: 8px 10px;
-    font-size: 12px;
-    line-height: 1.45;
+    border-top: 4px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.5;
     color: var(--text);
-    box-shadow: var(--shadow);
-    pointer-events: auto;
     cursor: text;
+    transition: box-shadow .12s;
   }
+  .callout-box:hover { box-shadow: var(--shadow); }
   .callout-box:focus { outline: 2px solid var(--accent); }
-  .callout-box.edited { box-shadow: 0 0 0 1.5px var(--accent), var(--shadow); }
+  .callout-box.edited { box-shadow: 0 0 0 1.5px var(--accent); }
   .callout-region-label {
     display: block;
-    font-size: 9.5px;
+    font-size: 10px;
     font-family: var(--mono);
     text-transform: uppercase;
-    letter-spacing: .04em;
+    letter-spacing: .05em;
     font-weight: 650;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
   }
+  .callout-image { display: flex; justify-content: center; }
+  .callout-image img { max-height: 62vh; }
   .callout-unplaced-list { margin-top: 16px; font-size: 12.5px; color: var(--text-dim); max-width: 900px; margin-inline: auto; }
   .callout-unplaced-list .item { padding: 8px 0; border-top: 1px solid var(--border); }
 
@@ -1114,140 +1099,66 @@ async function renderCalloutView() {
   }
   currentCallouts = data.callouts || [];
 
-  const center = document.createElement('div');
-  center.className = 'callout-center';
-  const wrap = document.createElement('div');
-  wrap.className = 'callout-wrap';
-  const img = document.createElement('img');
-  img.id = 'calloutImg';
-  img.src = `/api/report/${currentReport.case_id}/image.png?t=${Date.now()}`;
-  wrap.appendChild(img);
-  center.appendChild(wrap);
-
-  content.innerHTML = '';
-  content.appendChild(center);
-
   const placed = currentCallouts.filter(c => c.x !== null && c.y !== null);
   const unplaced = currentCallouts.filter(c => c.x === null || c.y === null);
 
-  img.onload = () => {
-    layoutCallouts(wrap, img, placed);
-  };
-  if (img.complete) layoutCallouts(wrap, img, placed);
+  content.innerHTML = '';
+
+  // cards first (horizontal row, wraps on narrow screens), image below
+  if (placed.length > 0) {
+    const cards = document.createElement('div');
+    cards.className = 'callout-cards';
+    placed.forEach(c => cards.appendChild(buildCalloutCard(c)));
+    content.appendChild(cards);
+  }
+
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'callout-image';
+  const img = document.createElement('img');
+  img.id = 'calloutImg';
+  img.src = `/api/report/${currentReport.case_id}/image.png?t=${Date.now()}`;
+  imgWrap.appendChild(img);
+  content.appendChild(imgWrap);
 
   if (unplaced.length > 0) {
     const list = document.createElement('div');
     list.className = 'callout-unplaced-list';
     list.innerHTML = '<div class="field-label">Findings with no region match on this slice</div>' +
-      unplaced.map(c => `<div class="item">"${c.text}" <span class="sentence-tag-label">[${c.region}]</span></div>`).join('');
+      unplaced.map(c => `<div class="item">"${esc(c.text)}" <span class="sentence-tag-label">[${esc(c.region)}]</span></div>`).join('');
     content.appendChild(list);
   }
 }
 
-// object-fit:contain puts the image's actual pixels in a sub-rect of the
-// frame whenever the frame's aspect ratio doesn't match the image's, so the
-// callout math needs that visible sub-rect, not the raw frame box.
-function getContainRect(frameW, frameH, natW, natH) {
-  const frameAspect = frameW / frameH;
-  const imgAspect = natW / natH;
-  if (imgAspect > frameAspect) {
-    const rw = frameW, rh = frameW / imgAspect;
-    return { x: 0, y: (frameH - rh) / 2, w: rw, h: rh };
-  }
-  const rh = frameH, rw = frameH * imgAspect;
-  return { x: (frameW - rw) / 2, y: 0, w: rw, h: rh };
-}
+function buildCalloutCard(c) {
+  const color = CALLOUT_REGION_COLORS[c.region] || '#6aa9e9';
+  const box = document.createElement('div');
+  box.className = 'callout-box';
+  box.contentEditable = 'true';
+  box.spellcheck = false;
+  box.style.borderTopColor = color;
+  box.dataset.findingIdx = c.finding_index;
 
-// Places callout boxes near each region's real centroid, alternating them
-// to the left/right of the image so they don't stack directly on top of
-// each other, then connects each box to its centroid with a line.
-function layoutCallouts(wrap, img, placed) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('class', 'callout-svg');
-  wrap.appendChild(svg);
+  const label = document.createElement('span');
+  label.className = 'callout-region-label';
+  label.style.color = color;
+  label.textContent = c.region;
+  box.appendChild(label);
 
-  const frameW = wrap.clientWidth, frameH = wrap.clientHeight;
-  const natW = img.naturalWidth || frameW, natH = img.naturalHeight || frameH;
-  const rect = getContainRect(frameW, frameH, natW, natH);
+  const edited = calloutEditsMap[c.finding_index];
+  box.appendChild(document.createTextNode(edited !== undefined ? edited : c.text));
+  if (edited !== undefined) box.classList.add('edited');
 
-  const usedSlots = { left: 0, right: 0 };
-  const boxWidth = Math.min(220, rect.w * 0.42);
-  const boxHeight = 84;
-
-  placed.forEach((c, i) => {
-    const color = CALLOUT_REGION_COLORS[c.region] || '#5b9bd5';
-    const cx = rect.x + c.x * rect.w, cy = rect.y + c.y * rect.h;
-
-    const marker = document.createElement('div');
-    marker.className = 'callout-marker';
-    marker.style.left = cx + 'px';
-    marker.style.top = cy + 'px';
-    marker.style.background = color;
-    wrap.appendChild(marker);
-
-    // callout goes on the OPPOSITE side of the image from its region, so the
-    // connecting line has room to run and the box doesn't sit on top of it
-    const side = cx < frameW / 2 ? 'right' : 'left';
-    const slot = usedSlots[side]++;
-    const boxLeft = side === 'right' ? rect.x + rect.w - boxWidth - 6 : rect.x + 6;
-    const boxTop = Math.min(
-      Math.max(rect.y + slot * (boxHeight + 10) + 4, rect.y + 4),
-      Math.max(rect.y + rect.h - boxHeight - 4, rect.y + 4)
-    );
-
-    const box = document.createElement('div');
-    box.className = 'callout-box';
-    box.contentEditable = 'true';
-    box.spellcheck = false;
-    box.style.left = boxLeft + 'px';
-    box.style.top = boxTop + 'px';
-    box.style.width = boxWidth + 'px';
-    box.style.borderLeftColor = color;
-    box.dataset.findingIdx = c.finding_index;
-
-    const label = document.createElement('span');
-    label.className = 'callout-region-label';
-    label.style.color = color;
-    label.textContent = c.region;
-    box.appendChild(label);
-
-    const textNode = document.createTextNode(
-      calloutEditsMap[c.finding_index] !== undefined ? calloutEditsMap[c.finding_index] : c.text
-    );
-    box.appendChild(textNode);
-
-    if (calloutEditsMap[c.finding_index] !== undefined) box.classList.add('edited');
-
-    box.addEventListener('input', () => {
-      const text = box.textContent.trim();
-      if (text === c.text) {
-        delete calloutEditsMap[c.finding_index];
-        box.classList.remove('edited');
-      } else {
-        calloutEditsMap[c.finding_index] = text;
-        box.classList.add('edited');
-      }
-    });
-
-    wrap.appendChild(box);
-
-    // connecting line, drawn after layout so box position is known
-    requestAnimationFrame(() => {
-      const boxRect = box.getBoundingClientRect();
-      const wrapRect = wrap.getBoundingClientRect();
-      const boxAnchorX = side === 'right' ? boxRect.left - wrapRect.left : boxRect.right - wrapRect.left;
-      const boxAnchorY = boxRect.top - wrapRect.top + boxRect.height / 2;
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', cx);
-      line.setAttribute('y1', cy);
-      line.setAttribute('x2', boxAnchorX);
-      line.setAttribute('y2', boxAnchorY);
-      line.setAttribute('stroke', color);
-      line.setAttribute('stroke-width', '1.5');
-      line.setAttribute('stroke-dasharray', '3,3');
-      svg.appendChild(line);
-    });
+  box.addEventListener('input', () => {
+    const text = box.textContent.replace(c.region, '').trim();
+    if (text === c.text) {
+      delete calloutEditsMap[c.finding_index];
+      box.classList.remove('edited');
+    } else {
+      calloutEditsMap[c.finding_index] = text;
+      box.classList.add('edited');
+    }
   });
+  return box;
 }
 
 document.getElementById('paragraphViewToggle').onclick = () => {
@@ -1400,10 +1311,6 @@ window.addEventListener('resize', () => {
       canvas.height = img.clientHeight;
       canvas.style.width = img.clientWidth + 'px';
       canvas.style.height = img.clientHeight + 'px';
-    }
-    if (currentReport && reportViewMode === 'callout' &&
-        document.getElementById('module2').style.display === 'grid') {
-      renderCalloutView();
     }
   }, 150);
 });
