@@ -116,7 +116,83 @@ image = (
     )
 )
 
+@app.function(
+    image=image,
+    volumes={VOLUME_PATH: volume},
+    timeout=300,
+)
+def check_synthetic_consistency(case_id: str):
+    """Checks slice-to-slice anatomical consistency for a synthetic case --
+    the same metric as scan_real_consistency.py, computed the same way, so
+    the numbers are directly comparable to the real-case baseline."""
+    import os
+    import numpy as np
+    import nibabel as nib
 
+    mask_path = f"{VOLUME_PATH}/LeFusion_output/Mask/{case_id}"
+    img_path = f"{VOLUME_PATH}/LeFusion_output/Image/{case_id}"
+    if not os.path.exists(mask_path):
+        return {"error": f"Case not found: {case_id}"}
+
+    mask_data = np.asarray(nib.load(mask_path).get_fdata()).round().astype(int)
+    img_data = np.asarray(nib.load(img_path).get_fdata())
+
+    if img_data.shape != mask_data.shape and sorted(img_data.shape) == sorted(mask_data.shape):
+        remaining = list(range(mask_data.ndim))
+        perm = []
+        for target_size in img_data.shape:
+            for ax in remaining:
+                if mask_data.shape[ax] == target_size:
+                    perm.append(ax)
+                    remaining.remove(ax)
+                    break
+        mask_data = np.transpose(mask_data, perm)
+
+    def compute_slice_profile(mask_3d, label_cavity=1, label_myo=2):
+        profile = []
+        for s in range(mask_3d.shape[2]):
+            mask_2d = mask_3d[:, :, s]
+            cavity_ys, cavity_xs = (mask_2d == label_cavity).nonzero()
+            myo_area = int((mask_2d == label_myo).sum())
+            if len(cavity_ys) == 0:
+                profile.append({"slice": s, "cavity_area": 0, "myo_area": myo_area, "centroid": None})
+                continue
+            centroid = (float(cavity_ys.mean()), float(cavity_xs.mean()))
+            profile.append({"slice": s, "cavity_area": int(len(cavity_ys)), "myo_area": myo_area, "centroid": centroid})
+        return profile
+
+    def compute_consistency_metrics(profile):
+        import statistics
+        valid = [p for p in profile if p["centroid"] is not None]
+        if len(valid) < 2:
+            return None
+        centroid_shifts, area_changes_pct = [], []
+        for i in range(len(valid) - 1):
+            c1, c2 = valid[i]["centroid"], valid[i + 1]["centroid"]
+            shift = ((c1[0] - c2[0]) ** 2 + (c1[1] - c2[1]) ** 2) ** 0.5
+            centroid_shifts.append(shift)
+            a1, a2 = valid[i]["cavity_area"], valid[i + 1]["cavity_area"]
+            area_changes_pct.append(abs(a2 - a1) / max(a1, a2, 1) * 100)
+
+        def safe_stdev(vals):
+            return statistics.stdev(vals) if len(vals) > 1 else 0.0
+
+        return {
+            "n_valid_slices": len(valid),
+            "mean_centroid_shift_px": round(statistics.mean(centroid_shifts), 2),
+            "std_centroid_shift_px": round(safe_stdev(centroid_shifts), 2),
+            "mean_area_change_pct": round(statistics.mean(area_changes_pct), 1),
+            "std_area_change_pct": round(safe_stdev(area_changes_pct), 1),
+            "max_area_change_pct": round(max(area_changes_pct), 1),
+        }
+
+    profile = compute_slice_profile(mask_data)
+    metrics = compute_consistency_metrics(profile)
+    if metrics is None:
+        return {"error": "not enough slices with a visible cavity to check"}
+    cavity_areas_by_slice = [p["cavity_area"] for p in profile]
+    return {"case_id": case_id, "total_slices": mask_data.shape[2],
+            "cavity_areas_by_slice": cavity_areas_by_slice, **metrics}
 @app.function(
     image=image,
     gpu="A10G",
