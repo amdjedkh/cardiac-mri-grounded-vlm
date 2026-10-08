@@ -375,7 +375,10 @@ def compute_report_callouts(case_id: str, data: dict) -> list:
     try:
         img_data, mask_data = load_case_arrays(case_id, "real")
     except Exception:
-        return []
+        try:
+            img_data, mask_data = load_case_arrays(case_id, "synthetic")
+        except Exception:
+            return []
     if slice_idx < 0 or slice_idx >= mask_data.shape[2]:
         return []
     # NOT transposed: the report's slice image is the overlay_renderer.py PNG,
