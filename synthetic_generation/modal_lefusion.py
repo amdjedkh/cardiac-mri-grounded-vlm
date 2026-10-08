@@ -264,13 +264,13 @@ def setup_data_and_weights():
 
 @app.function(
     image=image,
-    gpu="A10G",
+    gpu="A100",
     volumes={VOLUME_PATH: volume},
     timeout=10800,  # 3 hours -- generous ceiling for a full-directory run;
                     # a small max_cases run finishes in a couple minutes and
                     # won't come close to this
 )
-def generate_synthetic_emidec(batch_size: int = 1, max_cases: int = 3):
+def generate_synthetic_emidec(batch_size: int = 1, max_cases: int = 3, reuse_when_exhausted: bool = False):
     """Runs LeFusion's actual EMIDEC inference command (verified against the
     real emidec_inference.sh), pointed at the volume's data/weights.
 
@@ -285,6 +285,8 @@ def generate_synthetic_emidec(batch_size: int = 1, max_cases: int = 3):
     """
     import subprocess
     import os
+    import random
+    import string
 
     data_dir = f"{VOLUME_PATH}/LeFusion_data/EMIDEC"
     model_path = f"{VOLUME_PATH}/LeFusion_model/EMIDEC/emidec.pt"
@@ -300,17 +302,67 @@ def generate_synthetic_emidec(batch_size: int = 1, max_cases: int = 3):
         subset_labels = f"{subset_dir}/labels"
         os.makedirs(subset_images, exist_ok=True)
         os.makedirs(subset_labels, exist_ok=True)
+        # The staging folder accumulates symlinks across every past run and is
+        # never cleaned, which silently made each new run reprocess the ENTIRE
+        # accumulated history (confirmed: 90 symlinks present when only ~50 new
+        # cases were requested) instead of just this run's cases. Clear it first
+        # so dataset_root_dir only ever contains exactly this run's case_files.
+        for d in (subset_images, subset_labels):
+            for existing in os.listdir(d):
+                os.remove(os.path.join(d, existing))
 
         real_images_dir = f"{full_pathological}/images"
         all_case_files = sorted(os.listdir(real_images_dir))
+        # LeFusion's own dataset loader (dataset/emidec_hist_in.py,
+        # EMIDECInDataset.get_image_files) hardcodes these 10 cases as a
+        # held-out test split and silently drops them before sampling --
+        # confirmed by reading that source. Exclude them here too: they
+        # never produce inference output (so counting them as "available"
+        # miscounts queue size), and reusing them as duplicate-generation
+        # sources would condition synthetic data on test-split patients.
+        LEFUSION_TEST_SPLIT_EXCLUDE = {
+            'Case_P005.nii.gz', 'Case_P008.nii.gz', 'Case_P039.nii.gz',
+            'Case_P057.nii.gz', 'Case_P061.nii.gz', 'Case_P071.nii.gz',
+            'Case_P072.nii.gz', 'Case_P077.nii.gz', 'Case_P078.nii.gz',
+            'Case_P082.nii.gz',
+        }
+        all_case_files = [f for f in all_case_files if f not in LEFUSION_TEST_SPLIT_EXCLUDE]
         already_done = set(os.listdir(out_img)) if os.path.exists(out_img) else set()
         new_case_files = [f for f in all_case_files if f not in already_done]
         case_files = new_case_files[:max_cases]
         print(f"{len(already_done)} cases already generated, skipping those. "
               f"Adding {len(case_files)} new cases: {case_files}")
+
+        shortfall = max_cases - len(case_files)
+        reuse_links = {}  # dest filename -> real source filename to symlink from
+        if shortfall > 0 and reuse_when_exhausted and all_case_files:
+            print(f"Unique real-case pool exhausted ({len(new_case_files)} unused left, "
+                  f"need {shortfall} more). Reusing already-used real cases under fresh "
+                  f"unique filenames (same mask geometry, independent stochastic sample "
+                  f"since no seed is pinned anywhere in this pipeline).")
+            existing_names = set(os.listdir(subset_images)) | already_done
+            i = 0
+            while shortfall > 0:
+                source_fname = all_case_files[i % len(all_case_files)]
+                i += 1
+                suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
+                base = source_fname[:-len(".nii.gz")] if source_fname.endswith(".nii.gz") else source_fname
+                dup_fname = f"{base}__dup{suffix}.nii.gz"
+                if dup_fname in existing_names:
+                    continue
+                existing_names.add(dup_fname)
+                reuse_links[dup_fname] = source_fname
+                case_files.append(dup_fname)
+                shortfall -= 1
+            print(f"Added {len(reuse_links)} reused-source cases: {reuse_links}")
+        elif shortfall > 0:
+            print(f"WARNING: only {len(case_files)}/{max_cases} cases available and "
+                  f"reuse_when_exhausted=False -- this run will fall short of max_cases.")
+
         for fname in case_files:
+            source_fname = reuse_links.get(fname, fname)
             for sub, dest_root in [("images", subset_images), ("labels", subset_labels)]:
-                src = os.path.abspath(f"{full_pathological}/{sub}/{fname}")
+                src = os.path.abspath(f"{full_pathological}/{sub}/{source_fname}")
                 dst = f"{dest_root}/{fname}"
                 if not os.path.exists(dst) and os.path.exists(src):
                     os.symlink(src, dst)

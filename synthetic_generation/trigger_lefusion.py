@@ -22,8 +22,8 @@ print("Step 1: ensuring data + weights are ready (waits for this to finish, it's
 setup_fn.remote()
 
 print("\nStep 2: spawning LeFusion inference on the deployed app (detached)...")
-print("Requesting 5 NEW cases beyond the 3 already generated (P001-P003 will be skipped).")
-call = gen_fn.spawn(batch_size=1, max_cases=5)
+print("Requesting 12 MORE cases (91 already exist -> 103 total, target 100+).")
+call = gen_fn.spawn(batch_size=1, max_cases=12, reuse_when_exhausted=True)
 
 print(f"\nJob submitted. Call ID: {call.object_id}")
 print("This job now runs independently of this script and your connection.")
