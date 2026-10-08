@@ -1,13 +1,13 @@
 """
 run_region_grounded_poc.py
 
-Generates the corrected proof of concept Carlos asked for: MRI + segmentation
+Generates the corrected proof of concept the supervisor asked for: MRI + segmentation
 mask overlay -> Gemini -> report where every Findings sentence is explicitly
 tagged to a real visual region, not a measurement field.
 
 Run AFTER: patients/*.json exist (build_patient_jsons.py) and overlays/*
 exist (overlay_renderer.py) for at least a few cases -- doesn't need all 8,
-Carlos asked for "several examples," not full coverage.
+the supervisor asked for "several examples," not full coverage.
 
 Usage:
     python run_region_grounded_poc.py
@@ -95,7 +95,7 @@ def call_gemini(client, system, user_text, image_paths, max_retries=6):
 
 
 def find_one_overlay_pair(case_id: str):
-    """Picks ONE representative slice (plain + overlay pair) per case -- Carlos asked
+    """Picks ONE representative slice (plain + overlay pair) per case -- the supervisor asked
     for example outputs, not a full per-slice sweep yet."""
     overlay_dir = os.path.join("overlays", case_id)
     plains = sorted(glob.glob(os.path.join(overlay_dir, "*_plain.png")))

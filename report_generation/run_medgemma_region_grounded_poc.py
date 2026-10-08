@@ -2,7 +2,7 @@
 run_medgemma_region_grounded_poc.py
 
 Same corrected region-grounding task as run_region_grounded_poc.py, but for
-MedGemma via the existing Modal deployment, per Carlos's "optionally MedGemma"
+MedGemma via the existing Modal deployment, per the supervisor's "optionally MedGemma"
 note. Reuses modal_medgemma.py -- no redeploy needed if it's already up from
 the earlier baseline runs.
 

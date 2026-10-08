@@ -31,3 +31,6 @@ GEMINI_API_KEY*
 # Rendered images (regenerable)
 *.png
 !docs/**/*.png
+
+venv/
+__pycache__/

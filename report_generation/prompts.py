@@ -2,7 +2,7 @@
 prompts.py
 
 Four baseline prompt scaffolds for the EMIDEC report-generation POC, per
-Carlos's task list:
+the supervisor's task list:
 
   1. gemini_measurements_only(record)         -- text-only, no images
   2. gemini_full_input(record)                -- images + overlay + measurements + metadata

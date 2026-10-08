@@ -20,7 +20,7 @@ MATH is correct and already tested. The angular position itself (in
 degrees) is trustworthy. The anatomical NAME attached to that angle is only
 as good as the orientation assumption. Verify by checking your case's
 Images/ file against a case metadata note or a known-normal reference before
-quoting a specific segment name to Carlos as fact.
+quoting a specific segment name to the supervisor as fact.
 
 Usage:
     python assign_aha17_segment.py Case_P004 3
