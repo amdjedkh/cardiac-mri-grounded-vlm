@@ -2,7 +2,7 @@
 render_case_bullseye.py
 
 Directly builds what the supervisor asked for: an AHA17 bullseye colored with REAL
-computed data from a case's actual segmentation mask (like panel D in her
+computed data from a case's actual segmentation mask (like panel D in the
 reference image), not a generic textbook reference.
 
 For every slice in the case, this determines the AHA17 segment(s) present
