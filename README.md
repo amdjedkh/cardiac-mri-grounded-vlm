@@ -87,16 +87,9 @@ modal volume get cardiac-data LeFusion_output/Image ./synthetic_cases/Image
 modal volume get cardiac-data LeFusion_output/Mask ./synthetic_cases/Mask
 ```
 
-## Open questions — not yet resolved
+## Status
 
-1. **Field-of-view mismatch between real and synthetic images.** Synthetic images are tightly cropped to almost just the heart; real EMIDEC scans show the whole chest. Sent to the supervisors as an open question (train on this as-is, or crop real images to match?). Awaiting reply.
-2. **Same-patient identity pairing is unverified.** LeFusion names synthetic output files after their real conditioning case (e.g. synthetic `Case_P004.nii.gz` is assumed to correspond to real `Case_P004`), but this was never independently confirmed. A pixel comparison (axis-corrected, resampled) showed real-P004-vs-synthetic-P004 matching at only 73%, while two totally unrelated real patients matched at 97% — backwards from what you'd expect if genuinely paired. A proper controlled test (crop real image to heart-only region first, then compare against both its supposed source and several random other patients) has not been done.
-3. **AHA17 base-vs-apex slice ordering** was assumed, not confirmed, unlike the anterior/posterior orientation (confirmed via the sternum landmark).
-4. **Cardiologist annotation protocol** — not started.
-5. **Requested evaluation metrics** (BLEU/ROUGE/BERTScore for text, Dice/IoU/precision/accuracy for segmentation) — flagged back as needing clarification: text metrics need a reference report that doesn't exist yet, segmentation metrics need a predicted mask, but the pipeline currently only uses ground-truth masks as input.
-6. **Synthetic data quality checked on only a handful of cases so far.** The contiguity metric showed real cases range 0.591–0.739 and the one synthetic case checked thoroughly (whole-volume) scored 0.741 — no red flag yet, but sample size is small.
-7. **Whether LeFusion's separate DiffMask component needs to be incorporated.** The current pipeline uses only `emidec.pt`. LeFusion also ships `diffmask.pt` ("the mask generator") which may be necessary for genuinely new synthetic pathology geometry, rather than new image texture conditioned on a real mask. Not yet investigated.
-8. **3D generation methods to evaluate**, per the latest meeting: NVIDIA's `NV-Generate-CTMR` (note: their MR model is image-only, no paired masks, and cardiac isn't in its listed supported body regions — CT models support pairs but not MR) and a more promising candidate found via literature search, `github.com/SoufianeBH/Paired-Image-Segmentation-Synthesis` (LGE-specific, joint image+mask synthesis, tested with 200 synthetic volumes matching the project's own target number). Neither has been tested yet.
+The data and synthetic-generation stages are in progress. Experiments have not started.
 
 ## Environment setup
 

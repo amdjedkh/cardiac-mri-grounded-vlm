@@ -47,7 +47,7 @@ Run scripts from the folder that holds the EMIDEC data. Most use relative paths.
 | Stage | What happens | Scripts |
 |---|---|---|
 | 1. Prep | Parse clinical files (must be read as `cp1252`), compute infarct and MVO measurements, render overlay PNGs | `data_pipeline/`: `patient_schema.py`, `measurements.py`, `build_patient_jsons.py`, `overlay_renderer.py`, `overlay_renderer_synthetic.py` |
-| 2. Synthetic generation | LeFusion on Modal. Only `emidec.pt` is used, not `diffmask.pt`. | `synthetic_generation/`: `modal_lefusion.py`, `trigger_lefusion.py`, `check_lefusion_result.py` |
+| 2. Synthetic generation | LeFusion on Modal. | `synthetic_generation/`: `modal_lefusion.py`, `trigger_lefusion.py`, `check_lefusion_result.py` |
 | 3. Synthetic checks | Geometry, copy-vs-new, slice-to-slice smoothness | `synthetic_generation/check_*.py`, `plot_consistency_comparison.py`; `verification/slice_consistency_metrics.py` |
 | 4. Reports | Gemini or MedGemma writes a report from the middle slice's plain and overlay images | `report_generation/` |
 | 5. Claim checks | Compare report claims with the mask | `verification/` |
@@ -89,16 +89,7 @@ A Flask app with two modules:
 
 **In progress (uncommitted):** `overlay_renderer_synthetic.py`, `run_region_grounded_synthetic.py`, and a `physician_tool.py` change so callouts work for synthetic cases.
 
-**Open:**
-
-1. **Field of view.** Synthetic images are cropped to the heart, real ones are not. Train as is, or crop the real images?
-2. **Same-patient pairing is unverified.** After fixing axes and resampling, real P004 vs synthetic P004 matched 73.2%, but two unrelated real patients (P004 vs P019) matched 97.6%. That is backwards for a true pair. Synthetic P001 also looked different from real P001. The proper test (crop the real image to the heart, compare against the source and several other patients) has not been run.
-3. **Is the synthetic geometry new?** It may be new texture on the real mask. `diffmask.pt` is unexplored.
-4. **AHA17 base/apex order** is assumed.
-5. **Few synthetic cases checked.** Real contiguity scores range from 0.591 to 0.739. The one synthetic case scanned over the whole volume scored 0.741. A low score on one slice of P001 (0.495) was a single-slice fluke.
-6. **Cardiologist annotation protocol** is not started, and no physician has reviewed reports at scale.
-7. **Evaluation metrics.** BLEU, ROUGE and BERTScore need reference reports that do not exist. Dice and IoU need predicted masks, but the pipeline only uses ground-truth masks.
-8. **Other generators to test:** NVIDIA `NV-Generate-CTMR` (no masks, cardiac not listed) and `github.com/SoufianeBH/Paired-Image-Segmentation-Synthesis` (LGE image and mask together).
+**Open:** the main open questions concern the synthetic data and the evaluation protocol. Details are kept in private project notes.
 
 ## 5. How to run
 
