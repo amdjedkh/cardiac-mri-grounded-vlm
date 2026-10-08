@@ -2,7 +2,7 @@
 
 Generates synthetic EMIDEC-style cardiac MRI + masks by running [LeFusion](https://github.com/HINTLab/LeFusion)'s pretrained weights on [Modal](https://modal.com), plus a set of scripts to inspect, verify, and visualize the results.
 
-This doc is written so someone with **no prior exposure to this pipeline** (Carlos, running on his own compute) can get it working without rediscovering the same failures we already hit. Everything below reflects the actual state of the code in this folder — nothing here changes how the scripts behave.
+This doc is written so someone with **no prior exposure to this pipeline** (a collaborator, running on their own compute) can get it working without rediscovering the same failures we already hit. Everything below reflects the actual state of the code in this folder — nothing here changes how the scripts behave.
 
 ## What's in this folder
 

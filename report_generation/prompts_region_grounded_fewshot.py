@@ -1,7 +1,7 @@
 """
 prompts_region_grounded_fewshot.py
 
-Tests Karen's hypothesis directly: is MedGemma's poor grounding-format
+Tests the supervisor's hypothesis directly: is MedGemma's poor grounding-format
 compliance a real capability gap, or a prompt-format problem? The original
 prompt (prompts_region_grounded.py) gives MedGemma a dense, compound
 instruction (structure rules + grounding rules + negative-case rules +

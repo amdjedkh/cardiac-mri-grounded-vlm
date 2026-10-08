@@ -29,9 +29,9 @@ docs/                  Additional project context
 
 ### `report_generation/`
 Two generations of approach here, both present for reference:
-- `prompts.py` — **superseded.** Original approach, grounding tags pointed to measurement field names (e.g. `infarct_volume_ml`), not visual regions. Carlos clarified this isn't real grounding.
+- `prompts.py` — **superseded.** Original approach, grounding tags pointed to measurement field names (e.g. `infarct_volume_ml`), not visual regions. The supervisor clarified this isn't real grounding.
 - `prompts_region_grounded.py` — **current approach.** Tags in `[region: name]` format tied to actual segmentation regions. Verified against real geometry, not just format.
-- `prompts_region_grounded_fewshot.py` / `_fewshot2.py` — experiments testing whether MedGemma's poor performance was a prompting issue (Karen's hypothesis). One example fixed formatting but caused content-copying; two examples made it worse. Conclusion: prompting fixes format, not reliable content understanding, at 4B scale.
+- `prompts_region_grounded_fewshot.py` / `_fewshot2.py` — experiments testing whether MedGemma's poor performance was a prompting issue (a supervisor's hypothesis). One example fixed formatting but caused content-copying; two examples made it worse. Conclusion: prompting fixes format, not reliable content understanding, at 4B scale.
 - `run_region_grounded_synthetic.py` — region-grounded Gemini reports for synthetic cases (no clinical data, image + overlay only)
 - `run_*.py` — runners for each experiment (Gemini and MedGemma, original and region-grounded, fewshot variants)
 - `modal_medgemma.py` — Modal deployment for MedGemma-4B-IT (A10G GPU)
@@ -89,11 +89,11 @@ modal volume get cardiac-data LeFusion_output/Mask ./synthetic_cases/Mask
 
 ## Open questions — not yet resolved
 
-1. **Field-of-view mismatch between real and synthetic images.** Synthetic images are tightly cropped to almost just the heart; real EMIDEC scans show the whole chest. Sent to Karen/Carlos as an open question (train on this as-is, or crop real images to match?). Awaiting reply.
+1. **Field-of-view mismatch between real and synthetic images.** Synthetic images are tightly cropped to almost just the heart; real EMIDEC scans show the whole chest. Sent to the supervisors as an open question (train on this as-is, or crop real images to match?). Awaiting reply.
 2. **Same-patient identity pairing is unverified.** LeFusion names synthetic output files after their real conditioning case (e.g. synthetic `Case_P004.nii.gz` is assumed to correspond to real `Case_P004`), but this was never independently confirmed. A pixel comparison (axis-corrected, resampled) showed real-P004-vs-synthetic-P004 matching at only 73%, while two totally unrelated real patients matched at 97% — backwards from what you'd expect if genuinely paired. A proper controlled test (crop real image to heart-only region first, then compare against both its supposed source and several random other patients) has not been done.
 3. **AHA17 base-vs-apex slice ordering** was assumed, not confirmed, unlike the anterior/posterior orientation (confirmed via the sternum landmark).
 4. **Cardiologist annotation protocol** — not started.
-5. **Karen's requested evaluation metrics** (BLEU/ROUGE/BERTScore for text, Dice/IoU/precision/accuracy for segmentation) — flagged back to her as needing clarification: text metrics need a reference report that doesn't exist yet, segmentation metrics need a predicted mask, but the pipeline currently only uses ground-truth masks as input.
+5. **Requested evaluation metrics** (BLEU/ROUGE/BERTScore for text, Dice/IoU/precision/accuracy for segmentation) — flagged back as needing clarification: text metrics need a reference report that doesn't exist yet, segmentation metrics need a predicted mask, but the pipeline currently only uses ground-truth masks as input.
 6. **Synthetic data quality checked on only a handful of cases so far.** The contiguity metric showed real cases range 0.591–0.739 and the one synthetic case checked thoroughly (whole-volume) scored 0.741 — no red flag yet, but sample size is small.
 7. **Whether LeFusion's separate DiffMask component needs to be incorporated.** The current pipeline uses only `emidec.pt`. LeFusion also ships `diffmask.pt` ("the mask generator") which may be necessary for genuinely new synthetic pathology geometry, rather than new image texture conditioned on a real mask. Not yet investigated.
 8. **3D generation methods to evaluate**, per the latest meeting: NVIDIA's `NV-Generate-CTMR` (note: their MR model is image-only, no paired masks, and cardiac isn't in its listed supported body regions — CT models support pairs but not MR) and a more promising candidate found via literature search, `github.com/SoufianeBH/Paired-Image-Segmentation-Synthesis` (LGE-specific, joint image+mask synthesis, tested with 200 synthetic volumes matching the project's own target number). Neither has been tested yet.
@@ -102,7 +102,7 @@ modal volume get cardiac-data LeFusion_output/Mask ./synthetic_cases/Mask
 
 - Modal account, environment `main`, persistent volume `cardiac-data`
 - Deployed Modal apps: `medgemma-emidec-poc`, `lefusion-emidec-poc`, `physician-tool` (extra volume `physician-tool-data`, secret `physician-tool-auth`)
-- Gemini API: if using a KAUST Google account, you may hit an org policy blocking plain API keys (`API_KEY_SERVICE_BLOCKED` or requiring service-account binding) — using a personal Gmail account via [aistudio.google.com/apikey](https://aistudio.google.com/apikey) avoids this entirely
+- Gemini API: if using an institutional Google account, you may hit an org policy blocking plain API keys (`API_KEY_SERVICE_BLOCKED` or requiring service-account binding) — using a personal Gmail account via [aistudio.google.com/apikey](https://aistudio.google.com/apikey) avoids this entirely
 - EMIDEC dataset expected in the same folder structure as the official release: `Case_XXXX/Images/Case_XXXX.nii.gz` and `Case_XXXX/Contours/Case_XXXX.nii.gz`, plus clinical `.txt` files at the root
 
 ## Working principles established on this project

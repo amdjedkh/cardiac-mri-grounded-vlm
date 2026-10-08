@@ -1,18 +1,18 @@
 """
 prompts_region_grounded.py
 
-Implements the CORRECTED proof of concept Carlos asked for after the region
+Implements the CORRECTED proof of concept the supervisor asked for after the region
 grounding discussion.
 
 Important distinction from prompts.py's GROUNDING_INSTRUCTION:
   - prompts.py tags each sentence to a MEASUREMENT FIELD, e.g.
-    {"source": {"field": "infarct_volume_ml"}}. Carlos clarified this is
+    {"source": {"field": "infarct_volume_ml"}}. The supervisor clarified this is
     NOT standard VLM grounding -- it's just bookkeeping over the numbers.
   - Standard grounding means every sentence is linked back to an actual
     VISUAL REGION in the image: a segmentation region id/color, or a
     bounding box. This module implements that version.
 
-Input for this proof of concept, per Carlos: the MRI scan + the segmentation
+Input for this proof of concept, per the supervisor: the MRI scan + the segmentation
 mask (as a color overlay), nothing else required (measurements/metadata are
 optional extras, not the grounding mechanism itself).
 
@@ -88,7 +88,7 @@ def gemini_region_grounded_report(
     The corrected proof of concept: MRI + segmentation mask overlay -> Gemini ->
     a report where every Findings sentence is tagged to a real visual region.
 
-    include_measurements=False by default, matching Carlos's ask for a first pass
+    include_measurements=False by default, matching the supervisor's ask for a first pass
     using just the image + mask. Set True later to test whether adding numbers on
     top of the region tags changes anything (a natural follow-up ablation).
     """
@@ -126,7 +126,7 @@ def medgemma_region_grounded_report(
     overlay_paths: list,
     region_legend: dict = None,
 ) -> dict:
-    """Same corrected grounding task, for MedGemma (optional second model per Carlos)."""
+    """Same corrected grounding task, for MedGemma (optional second model per the supervisor)."""
     legend = region_legend or DEFAULT_REGION_LEGEND
 
     system = (

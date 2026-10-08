@@ -5,7 +5,7 @@ Loads all four baseline outputs per patient, cross-checks stated numbers
 against the real measurement JSON, checks for mandatory negative-finding
 statements, checks grounding tag presence, and prints a structured report
 highlighting the clearest examples for each failure category -- this is
-the actual deliverable Carlos asked for (illustrative failures), not a
+the actual deliverable the supervisor asked for (illustrative failures), not a
 full formal evaluation.
 
 Usage:

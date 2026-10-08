@@ -2,7 +2,7 @@
 run_medgemma_fewshot_test.py
 
 Tests the few-shot prompt variant against a few real cases, to see if it
-actually fixes MedGemma's grounding format compliance (Karen's hypothesis)
+actually fixes MedGemma's grounding format compliance (a supervisor's hypothesis)
 or if the problem persists (suggesting a real capability gap instead).
 
 Usage:
