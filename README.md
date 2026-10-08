@@ -1,3 +1,5 @@
+Copyright (c) 2026 Amdjed Khelifi. All rights reserved. See LICENSE.
+
 # Cardiac MRI Grounded VLM
 
 Research code for cardiac MRI reports that can be checked against the scan: region-grounded report generation, synthetic data, geometry checks, and physician review. For a plain-language summary of the whole project, see [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md).
