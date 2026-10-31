@@ -68,8 +68,8 @@ Run scripts from the folder that holds the EMIDEC data. Most use relative paths.
 ### Claim checks (stage 5)
 
 - `verify_slice_claims.py <case> <slice>`: how much of the heart wall a region covers, whether it forms one arc or scattered pieces, and where it sits along the arc (0 edge, 0.5 centre, 1 edge).
-- `assign_aha17_segment.py <case> <slice>`: AHA 17-segment location. Top of image = anterior (checked with the sternum). Slice 0 = base is assumed.
-- `check_location_claims_batch.py`: compares the wall named in every report with the computed wall. It ignores basal/mid/apical because of the unchecked slice order.
+- `assign_aha17_segment.py <case> <slice>`: AHA 17-segment location. Image top = anterior, image right = septal, slice 0 = apex and last slice = base (confirmed by author inspection of 5 cases, pending cardiologist confirmation). Limitation: base/mid/apical is a coarse thirds split of the slice stack on 5-9 slices (4-10 across EMIDEC), not a precise measurement.
+- `check_location_claims_batch.py`: compares the wall named in every report with the computed wall. It compares only the wall word (anterior/inferior/septal/lateral), not basal/mid/apical.
 - `render_case_bullseye.py <case>`, `spot_check_reports.py`: bullseye plot and a check of four known cases.
 
 This has caught an MVO called "central" that sat near one edge (0.81), and an "anteroseptal" claim that was really mid anterior.

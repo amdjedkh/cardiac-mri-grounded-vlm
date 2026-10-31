@@ -40,7 +40,7 @@ Two generations of approach here, both present for reference:
 ### `verification/`
 Quantitative tools to check report claims against actual mask geometry, rather than trusting model output or eyeballing images.
 - `verify_slice_claims.py` — `angular_coverage()` (what % of the ring a region covers), `contiguity_score()` (smooth solid arc vs. scattered fragments), `position_along_arc()` (is a region centered or off to one edge)
-- `assign_aha17_segment.py` — computes AHA 17-segment assignment from mask geometry. **Orientation note:** top-of-image = anterior wall was confirmed using the sternum as a landmark. Which end of the slice stack is basal vs. apical was assumed, never independently confirmed.
+- `assign_aha17_segment.py` — computes AHA 17-segment assignment from mask geometry. **Orientation:** image top = anterior, image right = septal, slice 0 = apex and last slice = base (confirmed by author inspection of 5 cases, pending cardiologist confirmation). Limitation: base/mid/apical is a coarse thirds split of the slice stack on 5-9 slices (4-10 across EMIDEC), not a precise measurement.
 - `check_location_claims_batch.py` — checks the wall named in every report (anterior/inferior/septal/lateral) against the AHA17 wall computed from the mask
 - `spot_check_reports.py` — checks reports for P019, P004, P055, P060 against geometry already established
 - `slice_consistency_metrics.py`, `scan_real_consistency.py` — slice-to-slice smoothness of cavity size/centroid on real cases (shared metric used by the synthetic checks)
