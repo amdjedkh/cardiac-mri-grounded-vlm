@@ -1,0 +1,108 @@
+{
+ "seed": 42,
+ "runs": [
+  {
+   "case": "Case_P055",
+   "source_metrics": {
+    "infarct_px": 123,
+    "mvo_px": 52,
+    "lesion_px": 175,
+    "wall_px": 3944,
+    "infarct_frac": 0.03118661257606491,
+    "mvo_frac": 0.013184584178498986,
+    "lesion_frac": 0.04437119675456389,
+    "contiguity": 0.7110000000000001,
+    "mvo_touch": 1.0
+   },
+   "accepted": [
+    {
+     "params": {
+      "rotation_deg": -15.055185738316501,
+      "angular_scale": 1.2228057115731272,
+      "depth_scale": 1.0695981825434215,
+      "slice_shift": -1
+     },
+     "metrics": {
+      "infarct_px": 123,
+      "mvo_px": 61,
+      "lesion_px": 184,
+      "wall_px": 3944,
+      "infarct_frac": 0.03118661257606491,
+      "mvo_frac": 0.015466531440162272,
+      "lesion_frac": 0.04665314401622718,
+      "contiguity": 0.748,
+      "mvo_touch": 1.0
+     },
+     "why": []
+    },
+    {
+     "params": {
+      "rotation_deg": 43.94113749299222,
+      "angular_scale": 1.046160008376609,
+      "depth_scale": 1.0624217733388135,
+      "slice_shift": 0
+     },
+     "metrics": {
+      "infarct_px": 95,
+      "mvo_px": 43,
+      "lesion_px": 138,
+      "wall_px": 3944,
+      "infarct_frac": 0.024087221095334687,
+      "mvo_frac": 0.0109026369168357,
+      "lesion_frac": 0.03498985801217039,
+      "contiguity": 0.739,
+      "mvo_touch": 1.0
+     },
+     "why": []
+    },
+    {
+     "params": {
+      "rotation_deg": -53.23061051674797,
+      "angular_scale": 1.104149316168472,
+      "depth_scale": 1.131565812704725,
+      "slice_shift": 0
+     },
+     "metrics": {
+      "infarct_px": 112,
+      "mvo_px": 54,
+      "lesion_px": 166,
+      "wall_px": 3944,
+      "infarct_frac": 0.028397565922920892,
+      "mvo_frac": 0.013691683569979716,
+      "lesion_frac": 0.04208924949290061,
+      "contiguity": 0.7515000000000001,
+      "mvo_touch": 1.0
+     },
+     "why": []
+    }
+   ],
+   "rejected": [
+    {
+     "params": {
+      "rotation_deg": 11.62201895357844,
+      "angular_scale": 0.9761157104704633,
+      "depth_scale": 0.8799924747454009,
+      "slice_shift": 1
+     },
+     "metrics": {
+      "infarct_px": 43,
+      "mvo_px": 0,
+      "lesion_px": 43,
+      "wall_px": 3944,
+      "infarct_frac": 0.0109026369168357,
+      "mvo_frac": 0.0,
+      "lesion_frac": 0.0109026369168357,
+      "contiguity": 0.786,
+      "mvo_touch": null
+     },
+     "why": [
+      "lesion pushed off the heart (76% of lesion pixels on lost slices)",
+      "infarct area x0.35 outside 0.5-1.5",
+      "mvo area x0.00 outside 0.5-1.5",
+      "lesion area x0.25 outside 0.5-1.5"
+     ]
+    }
+   ]
+  }
+ ]
+}
