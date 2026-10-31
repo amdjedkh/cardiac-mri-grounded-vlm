@@ -37,7 +37,14 @@ Usage:
     modal run modal_lefusion.py
 """
 
+import os
+import sys
+
 import modal
+
+_REPO_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+sys.path.insert(0, _REPO_ROOT)
+import config  # seeds and model settings live in config.py
 
 app = modal.App("lefusion-emidec-poc")
 
@@ -114,6 +121,11 @@ image = (
     .run_commands(
         "git clone https://github.com/HINTLab/LeFusion.git /root/LeFusion",
     )
+    # patient-level test split: patients listed in split_v1.json must never be
+    # used as LeFusion inputs (see generate_synthetic_emidec)
+    .add_local_file(os.path.join(_REPO_ROOT, "config.py"), "/root/config.py")
+    .add_local_file(os.path.join(_REPO_ROOT, "splits", "split_utils.py"), "/root/split_utils.py")
+    .add_local_file(os.path.join(_REPO_ROOT, "splits", "split_v1.json"), "/root/split_v1.json")
 )
 
 @app.function(
@@ -264,13 +276,13 @@ def setup_data_and_weights():
 
 @app.function(
     image=image,
-    gpu="A100",
+    gpu=config.LEFUSION_GPU,
     volumes={VOLUME_PATH: volume},
     timeout=10800,  # 3 hours -- generous ceiling for a full-directory run;
                     # a small max_cases run finishes in a couple minutes and
                     # won't come close to this
 )
-def generate_synthetic_emidec(batch_size: int = 1, max_cases: int = 3, reuse_when_exhausted: bool = False):
+def generate_synthetic_emidec(batch_size: int = config.LEFUSION_BATCH_SIZE, max_cases: int = 3, reuse_when_exhausted: bool = False):
     """Runs LeFusion's actual EMIDEC inference command (verified against the
     real emidec_inference.sh), pointed at the volume's data/weights.
 
@@ -296,6 +308,16 @@ def generate_synthetic_emidec(batch_size: int = 1, max_cases: int = 3, reuse_whe
     os.makedirs(out_mask, exist_ok=True)
 
     full_pathological = f"{data_dir}/Pathological"
+
+    def _drop_held_out(filenames):
+        import sys
+        sys.path.insert(0, "/root")
+        from split_utils import load_split, filter_input_pool
+        held_out = set(load_split("/root/split_v1.json")["test"])
+        kept = filter_input_pool(filenames, held_out)
+        print(f"Split filter: removed {len(filenames) - len(kept)} held-out test cases from the input pool")
+        return kept
+
     if max_cases is not None:
         subset_dir = f"{VOLUME_PATH}/LeFusion_subset_Pathological"
         subset_images = f"{subset_dir}/images"
@@ -327,6 +349,10 @@ def generate_synthetic_emidec(batch_size: int = 1, max_cases: int = 3, reuse_whe
             'Case_P082.nii.gz',
         }
         all_case_files = [f for f in all_case_files if f not in LEFUSION_TEST_SPLIT_EXCLUDE]
+        # Our own patient-level test set (splits/split_v1.json). These patients
+        # are removed from the input pool, which also removes them as sources
+        # for __dup reuse below.
+        all_case_files = _drop_held_out(all_case_files)
         already_done = set(os.listdir(out_img)) if os.path.exists(out_img) else set()
         new_case_files = [f for f in all_case_files if f not in already_done]
         case_files = new_case_files[:max_cases]
@@ -369,25 +395,37 @@ def generate_synthetic_emidec(batch_size: int = 1, max_cases: int = 3, reuse_whe
         dataset_root = subset_dir
         print(f"Using {len(case_files)} cases (max_cases={max_cases}): {case_files}")
     else:
-        dataset_root = full_pathological
-        print("Using the FULL Pathological directory (max_cases=None) -- "
+        # Full-directory run: stage symlinks for the filtered pool instead of
+        # pointing at the raw directory, so held-out patients are never read.
+        dataset_root = f"{VOLUME_PATH}/LeFusion_subset_full"
+        for sub in ("images", "labels"):
+            os.makedirs(f"{dataset_root}/{sub}", exist_ok=True)
+            for existing in os.listdir(f"{dataset_root}/{sub}"):
+                os.remove(os.path.join(f"{dataset_root}/{sub}", existing))
+        full_files = _drop_held_out(sorted(os.listdir(f"{full_pathological}/images")))
+        for fname in full_files:
+            for sub in ("images", "labels"):
+                src = os.path.abspath(f"{full_pathological}/{sub}/{fname}")
+                if os.path.exists(src):
+                    os.symlink(src, f"{dataset_root}/{sub}/{fname}")
+        print(f"Using the full filtered Pathological pool ({len(full_files)} cases) -- "
               "this will take roughly 45-50 minutes based on the confirmed "
               "~43 sec/case rate.")
 
     cmd = [
         "python", "/root/LeFusion/LeFusion/inference/inference.py",
         "data_type=emidec",
-        "types=1",
-        "diffusion_img_size=72",
-        "diffusion_depth_size=10",
-        "diffusion_num_channels=2",
+        f"types={config.LEFUSION_TYPES}",
+        f"diffusion_img_size={config.LEFUSION_DIFFUSION_IMG_SIZE}",
+        f"diffusion_depth_size={config.LEFUSION_DIFFUSION_DEPTH_SIZE}",
+        f"diffusion_num_channels={config.LEFUSION_DIFFUSION_NUM_CHANNELS}",
         f"dataset_root_dir={dataset_root}/",
         f"target_img_path={out_img}",
         f"target_label_path={out_mask}",
-        "schedule_jump_params.jump_length=2",
-        "schedule_jump_params.jump_n_sample=2",
+        f"schedule_jump_params.jump_length={config.LEFUSION_JUMP_LENGTH}",
+        f"schedule_jump_params.jump_n_sample={config.LEFUSION_JUMP_N_SAMPLE}",
         f"model_path={model_path}",
-        "cond_dim=32",
+        f"cond_dim={config.LEFUSION_COND_DIM}",
         f"batch_size={batch_size}",
     ]
     # snapshot before running, so we can report only what THIS run actually

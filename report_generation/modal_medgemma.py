@@ -17,7 +17,13 @@ Usage from run_medgemma.py (local script):
     the Modal function is called remotely per patient -- see run_medgemma.py
 """
 
+import os
+import sys
+
 import modal
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import config  # seeds and model settings live in config.py
 
 app = modal.App("medgemma-emidec-poc")
 
@@ -29,9 +35,10 @@ image = (
         "accelerate",
         "pillow",
     )
+    .add_local_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config.py"), "/root/config.py")
 )
 
-MODEL_ID = "google/medgemma-4b-it"
+MODEL_ID = config.MEDGEMMA_MODEL_ID
 
 
 @app.cls(
@@ -75,7 +82,11 @@ class MedGemma:
 
         input_len = inputs["input_ids"].shape[-1]
         with torch.inference_mode():
-            output = self.model.generate(**inputs, max_new_tokens=1024, do_sample=False)
+            output = self.model.generate(
+                **inputs,
+                max_new_tokens=config.MEDGEMMA_MAX_NEW_TOKENS,
+                do_sample=config.MEDGEMMA_DO_SAMPLE,
+            )
         generated = output[0][input_len:]
         text = self.processor.decode(generated, skip_special_tokens=True)
         return text

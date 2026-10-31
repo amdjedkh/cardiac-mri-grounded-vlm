@@ -1,0 +1,229 @@
+{
+ "split": "splits/split_v1.json",
+ "n_files": 30,
+ "patients": [
+  "Case_P028",
+  "Case_P031",
+  "Case_P036",
+  "Case_P045",
+  "Case_P060",
+  "Case_P064",
+  "Case_P067",
+  "Case_P080",
+  "Case_P088",
+  "Case_P093",
+  "Case_P096"
+ ],
+ "files": [
+  {
+   "original_path": "synthetic_cases/Image/Case_P028.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P028.nii.gz",
+   "source_patient": "Case_P028",
+   "sha256": "70eb0ea8832d195aa32b488788636469e10cb6cef75cba2d5c175b314a968534",
+   "reason": "source patient Case_P028 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P028__dup2bhwev.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P028__dup2bhwev.nii.gz",
+   "source_patient": "Case_P028",
+   "sha256": "6ce8fcdd95b85ea55d1911c7166336073caa69092c6f567dffb2f58c5a6914e2",
+   "reason": "source patient Case_P028 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P028__dupf1f680.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P028__dupf1f680.nii.gz",
+   "source_patient": "Case_P028",
+   "sha256": "7e728f7db7ed0a987865384777088dee54667b28debebb4274325cfe31d11b86",
+   "reason": "source patient Case_P028 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P031.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P031.nii.gz",
+   "source_patient": "Case_P031",
+   "sha256": "66a2eb2364ebffa9832ee8ea316d5c677b473f7cbdc6d565b93a42c139172860",
+   "reason": "source patient Case_P031 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P031__dupf5b2kn.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P031__dupf5b2kn.nii.gz",
+   "source_patient": "Case_P031",
+   "sha256": "cd49cb86ebc89fccb3285204255ef9d5c12c30919ef9ce3cbeb9ba02928a62d6",
+   "reason": "source patient Case_P031 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P036.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P036.nii.gz",
+   "source_patient": "Case_P036",
+   "sha256": "36d829ce0bc928d501b46ab95b3cb69624d775053cefaf8d0220e3e2a2aaeb52",
+   "reason": "source patient Case_P036 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P045.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P045.nii.gz",
+   "source_patient": "Case_P045",
+   "sha256": "e56f8f6c905f87af5b3e9b66de5f004345bfe9fb586bb5090ebf0383c075e099",
+   "reason": "source patient Case_P045 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P060.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P060.nii.gz",
+   "source_patient": "Case_P060",
+   "sha256": "e4fbe8670c7b846cbf1ee0d1ed742c51de0dabd5deeff1d276ec2fddae5bbea3",
+   "reason": "source patient Case_P060 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P064.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P064.nii.gz",
+   "source_patient": "Case_P064",
+   "sha256": "56b99de139fdafa179a7f1f5c4285b4074e046626e0383e4728fb28edf01963e",
+   "reason": "source patient Case_P064 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P067.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P067.nii.gz",
+   "source_patient": "Case_P067",
+   "sha256": "679eba9b56d32e09a58d3e5af7b57da6880fa56f8234eadba3a2ab9d95d79ebe",
+   "reason": "source patient Case_P067 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P080.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P080.nii.gz",
+   "source_patient": "Case_P080",
+   "sha256": "8ebeede54de220b14f4cccf649a7dc08b0e46518bde49490328ee3956677acd9",
+   "reason": "source patient Case_P080 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P088.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P088.nii.gz",
+   "source_patient": "Case_P088",
+   "sha256": "4e034e48258ac78820139b3d264118c3174c1d8856a7a1b6fe430f93223210ac",
+   "reason": "source patient Case_P088 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P093.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P093.nii.gz",
+   "source_patient": "Case_P093",
+   "sha256": "3c58e9b77491c725d8308c36072efdf1bb5d368b324e9115cbb158db7ca8f071",
+   "reason": "source patient Case_P093 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Image/Case_P096.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Image/Case_P096.nii.gz",
+   "source_patient": "Case_P096",
+   "sha256": "54aed689be07e1acc551d27716fa1282e6c0067a177951becf7c9b64d9cbfe7e",
+   "reason": "source patient Case_P096 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P028.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P028.nii.gz",
+   "source_patient": "Case_P028",
+   "sha256": "6f9463e1d4148883fd4fb2bd6b15059d6c18895213deef670a92a4fcf06007ef",
+   "reason": "source patient Case_P028 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P028__dup2bhwev.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P028__dup2bhwev.nii.gz",
+   "source_patient": "Case_P028",
+   "sha256": "6f9463e1d4148883fd4fb2bd6b15059d6c18895213deef670a92a4fcf06007ef",
+   "reason": "source patient Case_P028 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P028__dupf1f680.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P028__dupf1f680.nii.gz",
+   "source_patient": "Case_P028",
+   "sha256": "6f9463e1d4148883fd4fb2bd6b15059d6c18895213deef670a92a4fcf06007ef",
+   "reason": "source patient Case_P028 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P031.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P031.nii.gz",
+   "source_patient": "Case_P031",
+   "sha256": "3d79c58719fb4605afb82e0af767706ee7b17c0d2ffc870ac7a3554ee87a5a4e",
+   "reason": "source patient Case_P031 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P031__dupf5b2kn.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P031__dupf5b2kn.nii.gz",
+   "source_patient": "Case_P031",
+   "sha256": "3d79c58719fb4605afb82e0af767706ee7b17c0d2ffc870ac7a3554ee87a5a4e",
+   "reason": "source patient Case_P031 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P036.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P036.nii.gz",
+   "source_patient": "Case_P036",
+   "sha256": "876b287f3c23f34351480bb6ababffd1ee107436a59fd2e65ce6b4a369c78a95",
+   "reason": "source patient Case_P036 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P045.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P045.nii.gz",
+   "source_patient": "Case_P045",
+   "sha256": "51914dfdc99bfda7dc28ae0cebe46baf675379b9a28f01ba4795439a5c043f39",
+   "reason": "source patient Case_P045 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P060.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P060.nii.gz",
+   "source_patient": "Case_P060",
+   "sha256": "7795d4cc67063c7c069fb33b7e26ef570f4802d29401fbd320ddde545e0a98ef",
+   "reason": "source patient Case_P060 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P064.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P064.nii.gz",
+   "source_patient": "Case_P064",
+   "sha256": "1a78f92bb280d71428a1785c2bef1f4e0976f3a842ff49b9198f1eec43f10311",
+   "reason": "source patient Case_P064 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P067.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P067.nii.gz",
+   "source_patient": "Case_P067",
+   "sha256": "147da23a4b47934ea35a5e42bcaf576521440e2f4ad6af5b5702ae8dcb8647fb",
+   "reason": "source patient Case_P067 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P080.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P080.nii.gz",
+   "source_patient": "Case_P080",
+   "sha256": "d6fc756d4dd3a07b082f83878cd978afbe91f100914cc0570b15a880ec85f17a",
+   "reason": "source patient Case_P080 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P088.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P088.nii.gz",
+   "source_patient": "Case_P088",
+   "sha256": "fcdbeee7f6fa0d05af5b3dc846d9f9c2851a90e24d38905194968291021f258d",
+   "reason": "source patient Case_P088 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P093.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P093.nii.gz",
+   "source_patient": "Case_P093",
+   "sha256": "3ca95b910f6197eaf21d6c8e49b1dcec31d97e56f0c1a4e2053c0497a8a39015",
+   "reason": "source patient Case_P093 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_cases/Mask/Case_P096.nii.gz",
+   "quarantine_path": "quarantine_test_derived/synthetic_cases/Mask/Case_P096.nii.gz",
+   "source_patient": "Case_P096",
+   "sha256": "02fedf15219ff47165d6f2d8e8045bd2e3556942b7432af414ce497604b9c60c",
+   "reason": "source patient Case_P096 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_samples/Case_P036.png",
+   "quarantine_path": "quarantine_test_derived/synthetic_samples/Case_P036.png",
+   "source_patient": "Case_P036",
+   "sha256": "0b178d3fde1bdf3ed2a49b0bd19ed59c2593907dd4ef39b355356853d327f3b0",
+   "reason": "source patient Case_P036 is in splits/split_v1.json test set"
+  },
+  {
+   "original_path": "synthetic_samples/Case_P088.png",
+   "quarantine_path": "quarantine_test_derived/synthetic_samples/Case_P088.png",
+   "source_patient": "Case_P088",
+   "sha256": "8ee6b3dea27961b312dfa4f4985c56cef516197b50c2f919a41a0614e13f9546",
+   "reason": "source patient Case_P088 is in splits/split_v1.json test set"
+  }
+ ]
+}
