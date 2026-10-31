@@ -1073,14 +1073,9 @@ function renderParagraphView() {
   applyFlagStyles();
 }
 
-// Colors keyed by region name, matching LABEL_COLORS in physician_tool.py
-// (rendered as hex here since this is CSS/SVG, not a mask overlay).
-const CALLOUT_REGION_COLORS = {
-  lv_cavity: '#4a90d9',
-  myocardium: '#e2c34a',
-  infarct: '#e24a4a',
-  mvo: '#7ed957',
-};
+// Colors keyed by region name, injected from colors.py by physician_tool.py
+// (hex, since this is CSS/SVG, not a mask overlay).
+const CALLOUT_REGION_COLORS = {{ region_colors|tojson }};
 
 async function renderCalloutView() {
   const content = document.getElementById('reportViewerContent');

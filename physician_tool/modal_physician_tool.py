@@ -57,6 +57,11 @@ image = (
         os.path.join(PHYSICIAN_TOOL_DIR, "physician_tool.py"),
         "/root/physician_tool.py",
     )
+    # all overlay colors live in the repo-root colors.py (see physician_tool.py)
+    .add_local_file(
+        os.path.join(PHYSICIAN_TOOL_DIR, "..", "colors.py"),
+        "/root/colors.py",
+    )
     .add_local_dir(
         os.path.join(PHYSICIAN_TOOL_DIR, "templates"),
         "/root/templates",
