@@ -10,17 +10,14 @@ was in the "anteroseptal wall." This script computes which AHA17 angular
 sector the infarct's centroid actually falls into, so that claim can be
 checked against something real instead of being left as "unverified."
 
-IMPORTANT, READ BEFORE TRUSTING THE OUTPUT:
-This script makes ONE assumption that is NOT yet verified: that the top of
-the image corresponds to the anterior wall (standard short-axis display
-convention). If that assumption is wrong -- e.g. if the render is flipped
-or rotated relative to standard orientation -- every segment name below
-will be systematically wrong (rotated), even though the underlying angle
-MATH is correct and already tested. The angular position itself (in
-degrees) is trustworthy. The anatomical NAME attached to that angle is only
-as good as the orientation assumption. Verify by checking your case's
-Images/ file against a case metadata note or a known-normal reference before
-quoting a specific segment name to the supervisor as fact.
+ORIENTATION (confirmed by author inspection of 5 cases, pending cardiologist confirmation: P019, P004, P055, P010, P029;
+the NIfTI headers carry no usable orientation, so this rests on the images):
+  - array slice [axis0, axis1] is read with axis0 as rows (row 0 = image top)
+    and axis1 as columns, no flip
+  - anterior = image top
+  - septal side (RV side) = image right, lateral = image left
+  - slice index increases toward the BASE: slice 0 = apex, last slice = base
+  Limitation: base/mid/apical is a coarse thirds split of the slice stack on 5-9 slices (4-10 across EMIDEC), not a precise measurement.
 
 Usage:
     python assign_aha17_segment.py Case_P004 3
@@ -56,7 +53,8 @@ def to_bullseye_angle(raw_angle_deg: float) -> float:
     """Converts the raw angle (0=image-right, increasing clockwise since y
     grows downward -- the convention already used and tested in
     verify_slice_claims.py) into 'bullseye degrees' where 0=top(anterior),
-    clockwise. ASSUMES image-top = anterior wall -- see module docstring."""
+    clockwise. Image top = anterior and image right = septal (author-inspected,
+    pending cardiologist confirmation; see module docstring)."""
     return (raw_angle_deg - 270) % 360
 
 
@@ -71,11 +69,12 @@ def nearest_sector(bullseye_angle: float, centers: dict) -> str:
 
 def determine_ring_level(slice_idx: int, total_slices: int) -> str:
     """Basal / mid / apical based on where this slice sits in the stack.
-    ASSUMES slice index 0 = base, increasing toward apex -- this is the
-    typical EMIDEC/short-axis acquisition order, but has NOT been separately
-    confirmed here. If total_slices is small (EMIDEC often has ~8-10 per
-    patient), this is a coarse three-way split, not a precise measurement."""
-    frac = slice_idx / max(total_slices - 1, 1)
+    Slice index increases toward the base: slice 0 = apex, last slice = base
+    (author inspection of 5 cases, pending cardiologist confirmation; cavity
+    area also grows with slice index in all 100 EMIDEC cases). This is a
+    coarse thirds split on 5-9 slices (4-10 across EMIDEC), not a precise
+    measurement."""
+    frac = 1 - slice_idx / max(total_slices - 1, 1)  # 0 at the base, 1 at the apex
     if frac < 0.33:
         return "basal"
     elif frac < 0.67:
@@ -149,5 +148,5 @@ if __name__ == "__main__":
         print(f"  (centroid at {r['centroid_bullseye_angle_deg']}\u00b0 bullseye angle, "
               f"nearest named sector)")
 
-    print("\nASSUMPTION FLAG: this assumes image-top = anterior wall, and slice 0 = base.")
-    print("Verify both before quoting this segment name as confirmed fact.")
+    print("\nOrientation used: image top = anterior, image right = septal, slice 0 = apex (last slice = base).")
+    print("(Author inspection of 5 cases, pending cardiologist confirmation. Base/mid/apical is a coarse thirds split.)")

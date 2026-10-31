@@ -9,13 +9,12 @@ spot-checking one case at a time.
 Reuses assign_aha17_segment.py's tested assign_segment() function directly,
 rather than re-implementing the angle math.
 
-IMPORTANT CAVEAT (inherited from assign_aha17_segment.py, read before
-trusting results): this assumes image-top = anterior (confirmed earlier via
-the sternum landmark) AND slice 0 = base (NOT independently confirmed). A
-wrong ring-level (basal/mid/apical) doesn't affect the anterior/inferior/
-septal/lateral part of the match, only whether "basal" vs "mid" vs "apical"
-is right -- this checker only compares the anterior/inferior/septal/lateral
-wall word, not the ring level, for exactly that reason.
+ORIENTATION (inherited from assign_aha17_segment.py): image top = anterior,
+image right = septal, slice 0 = apex / last slice = base. This is confirmed by author inspection of 5 cases, pending cardiologist confirmation.
+Limitation: base/mid/apical is a coarse thirds split of the slice stack on 5-9 slices (4-10 across EMIDEC), not a precise measurement.
+The checker compares only the anterior/inferior/septal/lateral wall word,
+not the ring level. Note the apical ring uses 4 sectors and the other rings
+6, so the level a slice falls in can still change which wall word it gets.
 
 Usage (run from your EMIDEC folder):
     python3 check_location_claims_batch.py
@@ -177,9 +176,8 @@ def main():
             print(f"  {case_id}: {reason}")
 
     print(f"\nReminder: this only checks the anterior/inferior/septal/lateral")
-    print(f"direction, not basal/mid/apical level (that part relies on an")
-    print(f"unconfirmed slice-ordering assumption). A mismatch here is a real")
-    print(f"finding worth double-checking by eye before treating it as certain.")
+    print(f"direction, not basal/mid/apical level. Orientation is confirmed by author inspection of 5 cases, pending cardiologist confirmation.")
+    print(f"A mismatch here is a finding worth double-checking by eye before treating it as certain.")
 
 
 if __name__ == "__main__":
