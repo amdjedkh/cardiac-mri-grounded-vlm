@@ -166,5 +166,7 @@ if __name__ == "__main__":
     out_path = f"{case_id}_aha17_bullseye_real.png"
     render_bullseye_from_data(segments, case_id, out_path)
     print(f"\nSaved to {out_path}")
-    print("\nASSUMPTION FLAG (same as assign_aha17_segment.py): image-top = anterior "
-          "(now visually confirmed via sternum), slice 0 = base (not yet independently confirmed).")
+    print("\nOrientation (same as assign_aha17_segment.py): image top = anterior, image right = septal, "
+          "slice 0 = apex / last slice = base.")
+    print("Confirmed by author inspection of 5 cases, pending cardiologist confirmation.")
+    print("Limitation: base/mid/apical is a coarse thirds split of the slice stack on 5-9 slices (4-10 across EMIDEC), not a precise measurement.")
