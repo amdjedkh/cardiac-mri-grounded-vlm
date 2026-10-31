@@ -44,6 +44,12 @@ import matplotlib.pyplot as plt
 
 from flask import Flask, jsonify, request, send_file, render_template
 
+import sys
+# colors.py lives at the repo root locally, next to this file on Modal
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import colors  # all overlay colors live in colors.py
+
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -58,12 +64,6 @@ SYNTHETIC_CASES_DIR = os.environ.get("SYNTHETIC_CASES_DIR", os.path.join(WORK_DI
 ANNOTATIONS_PATH = os.path.join(WORK_DIR, "annotations", "image_validation.jsonl")
 os.makedirs(os.path.dirname(ANNOTATIONS_PATH), exist_ok=True)
 
-LABEL_COLORS = {
-    1: (74, 144, 217),   # lv_cavity - blue
-    2: (226, 195, 74),   # myocardium - yellow
-    3: (226, 74, 74),    # infarct - red
-    4: (126, 217, 87),   # mvo - green
-}
 
 
 def find_all_cases():
@@ -123,15 +123,11 @@ def load_case_arrays(case_id: str, case_type: str):
 def render_slice_png(img_data, mask_data, slice_idx: int, show_mask: bool) -> bytes:
     img_slice = img_data[:, :, slice_idx]
     fig, ax = plt.subplots(figsize=(6, 6), facecolor="#111111")
-    ax.imshow(img_slice.T, cmap="gray", origin="lower")
+    ax.imshow(img_slice, cmap="gray", origin="upper")
 
     if show_mask:
         mask_slice = mask_data[:, :, slice_idx]
-        overlay = np.zeros((*mask_slice.T.shape, 4))
-        for label, color in LABEL_COLORS.items():
-            r, g, b = [c / 255 for c in color]
-            overlay[(mask_slice.T == label)] = (r, g, b, 0.5)
-        ax.imshow(overlay, origin="lower")
+        ax.imshow(colors.rgba_overlay(mask_slice), origin="upper")
 
     ax.axis("off")
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
@@ -206,7 +202,7 @@ def api_export():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", region_colors=colors.hex_colors())
 
 
 @app.route("/api/cases")
@@ -311,11 +307,10 @@ def split_into_sentences(text: str) -> list:
 
 REGION_TAG_RE = re.compile(r"\[region:\s*([a-zA-Z_]+)\]")
 
-# label ids from LABEL_COLORS above, keyed by the same region names the
-# report generation prompts use in [region: ...] tags (see
-# report_generation/prompts_region_grounded.py DEFAULT_REGION_LEGEND).
-# "myocardium" here intentionally maps to label 2, matching LABEL_COLORS.
-REGION_LABEL_IDS = {"lv_cavity": 1, "myocardium": 2, "infarct": 3, "mvo": 4}
+# label ids keyed by the same region names the report generation prompts use
+# in [region: ...] tags (see report_generation/prompts_region_grounded.py
+# DEFAULT_REGION_LEGEND). Defined in colors.py next to the colors.
+REGION_LABEL_IDS = colors.REGION_LABEL_IDS
 
 
 def split_into_findings(text: str) -> list:
@@ -382,10 +377,9 @@ def compute_report_callouts(case_id: str, data: dict) -> list:
     if slice_idx < 0 or slice_idx >= mask_data.shape[2]:
         return []
     # NOT transposed: the report's slice image is the overlay_renderer.py PNG,
-    # which does Image.fromarray(mask_slice) directly with no transpose/flip
-    # (unlike render_slice_png's ax.imshow(...T, origin="lower") used in
-    # Module 1) -- so mask_2d must stay in that same [row, col] orientation
-    # for centroid fractions to land on the right spot in the displayed PNG.
+    # which does Image.fromarray(mask_slice) directly with no transpose/flip.
+    # Module 1's render_slice_png now draws the array the same way (no
+    # transpose, origin="upper"), so all views share one orientation.
     mask_2d = mask_data[:, :, slice_idx]
 
     callouts = []

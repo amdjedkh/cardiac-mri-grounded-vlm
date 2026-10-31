@@ -23,6 +23,11 @@ Usage:
 
 from __future__ import annotations
 import json
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import colors  # overlay colors live in colors.py; the legend below is built from them
 
 
 HALLUCINATION_GUARD = (
@@ -31,8 +36,8 @@ HALLUCINATION_GUARD = (
 )
 
 NEGATIVE_CASE_INSTRUCTION = (
-    "If no infarct region (red) is visible in the overlay, you must explicitly state "
-    "that no infarct is identified -- do not omit it. If no MVO region (yellow) is "
+    f"If no infarct region ({colors.COLOR_NAMES['infarct']}) is visible in the overlay, you must explicitly state "
+    f"that no infarct is identified -- do not omit it. If no MVO region ({colors.COLOR_NAMES['mvo']}) is "
     "visible, you must explicitly state that no microvascular obstruction is identified."
 )
 
@@ -64,11 +69,12 @@ REPORT_STRUCTURE_INSTRUCTION = (
     "no new claims, no grounding tag required here)."
 )
 
+_N = colors.COLOR_NAMES
 DEFAULT_REGION_LEGEND = {
-    "lv_cavity": "blue region if present in the overlay, or the central blood-filled chamber",
-    "myocardium": "unhighlighted heart-wall tissue surrounding the cavity (not red or yellow)",
-    "infarct": "red-highlighted region in the overlay",
-    "mvo": "yellow-highlighted region in the overlay",
+    "lv_cavity": f"{_N['lv_cavity']}-highlighted region in the overlay (the central blood-filled chamber)",
+    "myocardium": f"{_N['myocardium']}-highlighted heart-wall tissue surrounding the cavity",
+    "infarct": f"{_N['infarct']}-highlighted region in the overlay",
+    "mvo": f"{_N['mvo']}-highlighted region in the overlay",
 }
 
 

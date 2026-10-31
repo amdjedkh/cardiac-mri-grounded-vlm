@@ -20,6 +20,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import colors  # all overlay colors live in colors.py
+
 SYNTHETIC_CASES_DIR = os.environ.get("SYNTHETIC_CASES_DIR", "synthetic_cases")
 OUT_DIR = "overlays"
 LABEL_INFARCT = 3
@@ -69,9 +72,7 @@ def render_case(case_id: str):
     for s in slices:
         plain = normalize_slice(img_data[:, :, s])
         mask_2d = mask_data[:, :, s]
-        overlay_rgb = np.stack([plain, plain, plain], axis=-1)
-        overlay_rgb[mask_2d == LABEL_INFARCT] = [1.0, 0.0, 0.0]
-        overlay_rgb[mask_2d == LABEL_MVO] = [1.0, 1.0, 0.0]
+        overlay_rgb = colors.apply_overlay(plain, mask_2d)
         plt.imsave(os.path.join(out_dir, f"slice_{s:02d}_plain.png"), plain, cmap="gray", vmin=0, vmax=1)
         plt.imsave(os.path.join(out_dir, f"slice_{s:02d}_overlay.png"), overlay_rgb)
     print(f"{case_id}: rendered {len(slices)} slice(s) -> {out_dir}/")

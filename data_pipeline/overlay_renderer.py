@@ -20,13 +20,10 @@ import numpy as np
 import nibabel as nib
 from PIL import Image
 
-from measurements import DEFAULT_LABEL_MAP
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+import colors  # all overlay colors live in colors.py
 
-# Colors for overlay (RGBA), semi-transparent so underlying anatomy stays visible
-OVERLAY_COLORS = {
-    "infarct": (255, 60, 60, 130),   # red
-    "mvo": (255, 220, 40, 160),      # yellow, drawn on top of infarct where they overlap
-}
+from measurements import DEFAULT_LABEL_MAP
 
 
 def load_and_normalize_image(image_path: str) -> np.ndarray:
@@ -47,23 +44,11 @@ def load_mask(mask_path: str) -> np.ndarray:
 def render_slice(image_slice: np.ndarray, mask_slice: np.ndarray = None,
                   label_map: dict = None) -> Image.Image:
     """Renders one 2D slice as an RGB PIL image, with optional mask overlay."""
-    lm = label_map or DEFAULT_LABEL_MAP
-    base = Image.fromarray(image_slice).convert("RGBA")
-
-    if mask_slice is not None:
-        overlay = Image.new("RGBA", base.size, (0, 0, 0, 0))
-        overlay_arr = np.zeros((*mask_slice.shape, 4), dtype=np.uint8)
-
-        infarct_px = mask_slice == lm["infarct"]
-        overlay_arr[infarct_px] = OVERLAY_COLORS["infarct"]
-
-        mvo_px = mask_slice == lm["mvo"]
-        overlay_arr[mvo_px] = OVERLAY_COLORS["mvo"]  # drawn after, takes priority on overlap
-
-        overlay = Image.fromarray(overlay_arr)
-        base = Image.alpha_composite(base, overlay)
-
-    return base.convert("RGB")
+    # label_map is kept for callers that pass it; colors.py uses the verified
+    # EMIDEC label ids (REGION_LABEL_IDS), which match DEFAULT_LABEL_MAP.
+    if mask_slice is None:
+        return Image.fromarray(image_slice).convert("RGB")
+    return Image.fromarray(colors.apply_overlay(image_slice, mask_slice))
 
 
 def render_patient(case_id: str, root: str = ".", label_map: dict = None,
