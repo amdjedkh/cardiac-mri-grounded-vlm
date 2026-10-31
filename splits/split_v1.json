@@ -1,0 +1,730 @@
+{
+  "version": "split_v1",
+  "seed": 42,
+  "test_fraction": 0.2,
+  "strata_counts": {
+    "infarct_mvo": {
+      "total": 40,
+      "test": 8,
+      "train": 32
+    },
+    "infarct_no_mvo": {
+      "total": 27,
+      "test": 5,
+      "train": 22
+    },
+    "normal": {
+      "total": 33,
+      "test": 7,
+      "train": 26
+    }
+  },
+  "n_test": 20,
+  "n_train": 80,
+  "test": [
+    "Case_N013",
+    "Case_N018",
+    "Case_N040",
+    "Case_N046",
+    "Case_N052",
+    "Case_N070",
+    "Case_N079",
+    "Case_P008",
+    "Case_P028",
+    "Case_P031",
+    "Case_P036",
+    "Case_P039",
+    "Case_P045",
+    "Case_P060",
+    "Case_P064",
+    "Case_P067",
+    "Case_P080",
+    "Case_P088",
+    "Case_P093",
+    "Case_P096"
+  ],
+  "train": [
+    "Case_N006",
+    "Case_N012",
+    "Case_N014",
+    "Case_N016",
+    "Case_N020",
+    "Case_N023",
+    "Case_N024",
+    "Case_N025",
+    "Case_N027",
+    "Case_N030",
+    "Case_N032",
+    "Case_N033",
+    "Case_N034",
+    "Case_N037",
+    "Case_N041",
+    "Case_N042",
+    "Case_N048",
+    "Case_N049",
+    "Case_N054",
+    "Case_N058",
+    "Case_N065",
+    "Case_N068",
+    "Case_N075",
+    "Case_N083",
+    "Case_N084",
+    "Case_N089",
+    "Case_P001",
+    "Case_P002",
+    "Case_P003",
+    "Case_P004",
+    "Case_P005",
+    "Case_P007",
+    "Case_P009",
+    "Case_P010",
+    "Case_P011",
+    "Case_P015",
+    "Case_P017",
+    "Case_P019",
+    "Case_P021",
+    "Case_P022",
+    "Case_P026",
+    "Case_P029",
+    "Case_P035",
+    "Case_P038",
+    "Case_P043",
+    "Case_P044",
+    "Case_P047",
+    "Case_P050",
+    "Case_P051",
+    "Case_P053",
+    "Case_P055",
+    "Case_P056",
+    "Case_P057",
+    "Case_P059",
+    "Case_P061",
+    "Case_P062",
+    "Case_P063",
+    "Case_P066",
+    "Case_P069",
+    "Case_P071",
+    "Case_P072",
+    "Case_P073",
+    "Case_P074",
+    "Case_P076",
+    "Case_P077",
+    "Case_P078",
+    "Case_P081",
+    "Case_P082",
+    "Case_P085",
+    "Case_P086",
+    "Case_P087",
+    "Case_P090",
+    "Case_P091",
+    "Case_P092",
+    "Case_P094",
+    "Case_P095",
+    "Case_P097",
+    "Case_P098",
+    "Case_P099",
+    "Case_P100"
+  ],
+  "patients": {
+    "Case_N006": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N012": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N013": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N014": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N016": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N018": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N020": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N023": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N024": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N025": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N027": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N030": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N032": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N033": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N034": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N037": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N040": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N041": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N042": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N046": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N048": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N049": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N052": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N054": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N058": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N065": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N068": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N070": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N075": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N079": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N083": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N084": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_N089": {
+      "normal": true,
+      "infarct": false,
+      "mvo": false,
+      "stratum": "normal"
+    },
+    "Case_P001": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P002": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P003": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P004": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P005": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P007": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P008": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P009": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P010": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P011": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P015": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P017": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P019": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P021": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P022": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P026": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P028": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P029": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P031": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P035": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P036": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P038": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P039": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P043": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P044": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P045": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P047": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P050": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P051": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P053": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P055": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P056": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P057": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P059": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P060": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P061": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P062": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P063": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P064": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P066": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P067": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P069": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P071": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P072": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P073": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P074": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P076": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P077": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P078": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P080": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P081": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P082": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P085": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P086": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P087": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P088": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P090": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P091": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P092": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P093": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P094": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P095": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P096": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P097": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    },
+    "Case_P098": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P099": {
+      "normal": false,
+      "infarct": true,
+      "mvo": false,
+      "stratum": "infarct_no_mvo"
+    },
+    "Case_P100": {
+      "normal": false,
+      "infarct": true,
+      "mvo": true,
+      "stratum": "infarct_mvo"
+    }
+  }
+}
