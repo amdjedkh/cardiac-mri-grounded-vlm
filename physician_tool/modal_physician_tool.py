@@ -108,11 +108,14 @@ def flask_app():
     os.environ["SYNTHETIC_CASES_DIR"] = f"{VOLUME_PATH}/synthetic_cases"
     os.environ["REPORTS_DIR"] = f"{VOLUME_PATH}/outputs_region_grounded"
     os.environ["REPORT_OVERLAYS_DIR"] = f"{VOLUME_PATH}/overlays"
+    # annotations live on the volume (not the container disk) and are committed after every save
+    os.environ["ANNOTATIONS_DIR"] = f"{VOLUME_PATH}/annotations"
 
     # physician_tool.py's templates need to be found relative to itself
     os.chdir("/root")
 
     import physician_tool as pt
+    pt.after_annotation_write = volume.commit
 
     # confirmed via a read-only key-name check against the deployed secret
     # (KeyError on first deploy showed the reconstructed guess was wrong):
