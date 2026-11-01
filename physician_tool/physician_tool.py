@@ -61,7 +61,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WORK_DIR = os.getcwd()
 REAL_CASES_DIR = os.environ.get("REAL_CASES_DIR", WORK_DIR)
 SYNTHETIC_CASES_DIR = os.environ.get("SYNTHETIC_CASES_DIR", os.path.join(WORK_DIR, "synthetic_cases"))
-ANNOTATIONS_PATH = os.path.join(WORK_DIR, "annotations", "image_validation.jsonl")
+# Annotations go to ANNOTATIONS_DIR (on Modal: a mounted volume, so they survive restarts).
+ANNOTATIONS_DIR = os.environ.get("ANNOTATIONS_DIR", os.path.join(WORK_DIR, "annotations"))
+ANNOTATIONS_PATH = os.path.join(ANNOTATIONS_DIR, "image_validation.jsonl")
+# Called after every annotation write; the Modal wrapper sets it to volume.commit.
+after_annotation_write = lambda: None
 os.makedirs(os.path.dirname(ANNOTATIONS_PATH), exist_ok=True)
 
 
@@ -258,6 +262,7 @@ def api_validate():
     }
     with open(ANNOTATIONS_PATH, "a") as f:
         f.write(json.dumps(record) + "\n")
+    after_annotation_write()
 
     return jsonify({"status": "saved", "record": record})
 
@@ -277,7 +282,7 @@ def api_validations():
 
 REPORTS_DIR = os.environ.get("REPORTS_DIR", os.path.join(WORK_DIR, "outputs_region_grounded"))
 REPORT_OVERLAYS_DIR = os.environ.get("REPORT_OVERLAYS_DIR", os.path.join(WORK_DIR, "overlays"))
-REPORT_ANNOTATIONS_PATH = os.path.join(WORK_DIR, "annotations", "report_validation.jsonl")
+REPORT_ANNOTATIONS_PATH = os.path.join(ANNOTATIONS_DIR, "report_validation.jsonl")
 
 
 def find_all_reports():
@@ -487,6 +492,7 @@ def api_validate_report():
     }
     with open(REPORT_ANNOTATIONS_PATH, "a") as f:
         f.write(json.dumps(record) + "\n")
+    after_annotation_write()
     return jsonify({"status": "saved", "record": record})
 
 
