@@ -465,6 +465,86 @@ def generate_synthetic_emidec(batch_size: int = config.LEFUSION_BATCH_SIZE, max_
 
 @app.function(
     image=image,
+    gpu=config.LEFUSION_GPU,
+    volumes={VOLUME_PATH: volume},
+    timeout=3600,
+)
+def generate_staged(input_dir: str, output_dir: str,
+                    jump_length: int = config.LEFUSION_JUMP_LENGTH,
+                    jump_n_sample: int = config.LEFUSION_JUMP_N_SAMPLE):
+    """Runs LeFusion inference on a folder of staged volumes (input_dir/images and
+    input_dir/labels, both under the volume root), writing to output_dir/Image and
+    output_dir/Mask. Built for small checks: it never touches LeFusion_output, and it
+    refuses any file whose source patient is in the held-out test split."""
+    import subprocess, sys, time
+    sys.path.insert(0, "/root")
+    from split_utils import load_split, source_patient
+
+    root = f"{VOLUME_PATH}/{input_dir}"
+    if output_dir.strip("/").split("/")[0] == "LeFusion_output":
+        raise ValueError("refusing to write into LeFusion_output; use a separate output folder")
+    images, labels = sorted(os.listdir(f"{root}/images")), sorted(os.listdir(f"{root}/labels"))
+    if images != labels:
+        raise ValueError(f"images/ and labels/ differ: {set(images) ^ set(labels)}")
+    held_out = set(load_split("/root/split_v1.json")["test"])
+    bad = [f for f in images if source_patient(f) in held_out]
+    if bad:
+        raise ValueError(f"held-out test patients in the staged input: {bad}")
+    no_p = [f for f in images if "P" not in f]
+    if no_p:
+        raise ValueError(f"LeFusion's loader skips names without an upper-case 'P': {no_p}")
+    print(f"Staged input OK: {len(images)} volumes, none from the test split: {images}")
+
+    out_img = f"{VOLUME_PATH}/{output_dir}/Image/"
+    out_mask = f"{VOLUME_PATH}/{output_dir}/Mask/"
+    os.makedirs(out_img, exist_ok=True)
+    os.makedirs(out_mask, exist_ok=True)
+    cmd = [
+        "python", "/root/LeFusion/LeFusion/inference/inference.py",
+        "data_type=emidec",
+        f"types={config.LEFUSION_TYPES}",
+        f"diffusion_img_size={config.LEFUSION_DIFFUSION_IMG_SIZE}",
+        f"diffusion_depth_size={config.LEFUSION_DIFFUSION_DEPTH_SIZE}",
+        f"diffusion_num_channels={config.LEFUSION_DIFFUSION_NUM_CHANNELS}",
+        f"dataset_root_dir={root}/",
+        f"target_img_path={out_img}",
+        f"target_label_path={out_mask}",
+        f"schedule_jump_params.jump_length={jump_length}",
+        f"schedule_jump_params.jump_n_sample={jump_n_sample}",
+        f"model_path={VOLUME_PATH}/LeFusion_model/EMIDEC/emidec.pt",
+        f"cond_dim={config.LEFUSION_COND_DIM}",
+        f"batch_size={config.LEFUSION_BATCH_SIZE}",
+    ]
+    print("Running:", " ".join(cmd))
+    t0 = time.time()
+    proc = subprocess.Popen(cmd, cwd="/root/LeFusion", stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, text=True, bufsize=1)
+    lines = []
+    for line in proc.stdout:
+        print(line, end="")
+        lines.append(line)
+    proc.wait()
+    seconds = time.time() - t0
+    volume.commit()
+    return {"returncode": proc.returncode, "n_input": len(images), "seconds": round(seconds, 1),
+            "jump_length": jump_length, "jump_n_sample": jump_n_sample,
+            "outputs": sorted(os.listdir(out_img)), "output_tail": "".join(lines)[-1500:]}
+
+
+@app.local_entrypoint()
+def staged_test(input_dir: str = "LeFusion_staged_test/input",
+                output_dir: str = "LeFusion_staged_test/output",
+                jump_length: int = config.LEFUSION_JUMP_LENGTH,
+                jump_n_sample: int = config.LEFUSION_JUMP_N_SAMPLE):
+    """Short synchronous check run: `modal run synthetic_generation/modal_lefusion.py::staged_test`.
+    Safe here because the call is waited on (the cancel problem below applies to .spawn())."""
+    result = generate_staged.remote(input_dir, output_dir, jump_length, jump_n_sample)
+    print({k: v for k, v in result.items() if k != "output_tail"})
+    print(result["output_tail"][-600:])
+
+
+@app.function(
+    image=image,
     volumes={VOLUME_PATH: volume},
     timeout=300,
 )
