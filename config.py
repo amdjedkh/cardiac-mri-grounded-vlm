@@ -12,6 +12,15 @@ Modal apps ship this file into their containers (see modal_lefusion.py,
 modal_medgemma.py).
 """
 
+import os
+
+# ---------------------------------------------------------------- paths
+# Machine-specific locations, overridable with environment variables.
+EMIDEC_ROOT = os.environ.get("EMIDEC_ROOT", os.path.expanduser("~/Downloads/emidec-dataset-1.0.1"))
+# Backup of the LeFusion insert run: input_1..3/{images,labels}, output_1..3/{Image,Mask}, MANIFEST.json
+FULL_INSERT_DIR = os.environ.get("FULL_INSERT_DIR", os.path.expanduser("~/backups/full_insert_v1"))
+EXPERIMENT_OUT_DIR = os.environ.get("EXPERIMENT_OUT_DIR", os.path.join(FULL_INSERT_DIR, "reports"))
+
 # ---------------------------------------------------------------- seeds
 SPLIT_SEED = 42            # patient-level train/test split (splits/make_split.py)
 TEST_FRACTION = 0.20       # share of each stratum held out as the test set
