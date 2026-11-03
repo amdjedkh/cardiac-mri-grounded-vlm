@@ -24,6 +24,18 @@ Method (pixel-wise sector share), on the slice shown to the model:
   - verdict: right if share >= SHARE_RIGHT (0.5, declared here before scoring)
 Ring level (basal / mid / apical) is not checked. Reports with no wall word, or a
 slice without infarct, are "not checkable".
+
+TWO versions, thresholds declared before scoring and not tuned (from
+docs/claim_geometry_score_design.md):
+  recall-only (the version above): lenient word->sector map, right if share >= 0.5.
+  two-sided (check_two_sided): STRICT word->sector map (a word claims only the
+    sector(s) it names: anterior -> anterior; inferior -> inferior; septal ->
+    anteroseptal + inferoseptal; lateral -> anterolateral + inferolateral;
+    compound words -> that sector), and right only if EVERY claimed sector holds
+    >= 10% of the infarct pixels AND the claimed sectors together hold >= 80% of
+    them. The strict map is needed so that "every claimed sector" is meaningful.
+"Lesion pixels" here are infarct (label 3) pixels on the slice shown, because the
+claim sentence is the one tagged [region: infarct].
 """
 
 import re
@@ -31,6 +43,7 @@ import re
 import numpy as np
 
 SHARE_RIGHT = 0.5
+EACH_MIN, TOTAL_MIN = 0.10, 0.80
 SECTORS = ["anterior", "anteroseptal", "inferoseptal", "inferior", "inferolateral", "anterolateral"]
 WORD_SECTORS = {
     "anteroseptal": {"anteroseptal"}, "anterior-septal": {"anteroseptal"}, "antero-septal": {"anteroseptal"},
@@ -81,3 +94,48 @@ def check(text, mask2d):
         return {"checkable": False, "share": None, "right": None}
     share = float(np.isin(secs, list(claimed)).mean())
     return {"checkable": True, "share": share, "right": share >= SHARE_RIGHT}
+
+
+STRICT_SECTORS = {
+    "anteroseptal": {"anteroseptal"}, "anterior-septal": {"anteroseptal"}, "antero-septal": {"anteroseptal"},
+    "inferoseptal": {"inferoseptal"}, "inferior-septal": {"inferoseptal"}, "infero-septal": {"inferoseptal"},
+    "inferolateral": {"inferolateral"}, "inferior-lateral": {"inferolateral"}, "infero-lateral": {"inferolateral"},
+    "anterolateral": {"anterolateral"}, "anterior-lateral": {"anterolateral"}, "antero-lateral": {"anterolateral"},
+    "anterior": {"anterior"}, "inferior": {"inferior"},
+    "septal": {"anteroseptal", "inferoseptal"}, "lateral": {"anterolateral", "inferolateral"},
+}
+
+
+def shares(mask2d):
+    """{sector: fraction of the slice's infarct pixels}, or None if no cavity / no infarct."""
+    secs = sector_of(mask2d)
+    if secs is None:
+        return None
+    return {k: float((secs == k).mean()) for k in SECTORS}
+
+
+def claimed_from(text, mapping):
+    s = claim_sentence(text).lower()
+    found = set()
+    for word in sorted(mapping, key=len, reverse=True):
+        if word in s:
+            found |= mapping[word]
+            s = s.replace(word, " ")
+    return found
+
+
+def verdict_recall(claimed, sh):
+    return sum(sh[k] for k in claimed) >= SHARE_RIGHT
+
+
+def verdict_two_sided(claimed, sh):
+    return all(sh[k] >= EACH_MIN for k in claimed) and sum(sh[k] for k in claimed) >= TOTAL_MIN
+
+
+def check_two_sided(text, mask2d):
+    """{'checkable', 'right', 'min_claimed_share', 'total_share'} (right = two-sided rule)."""
+    claimed, sh = claimed_from(text, STRICT_SECTORS), shares(mask2d)
+    if not claimed or sh is None:
+        return {"checkable": False, "right": None}
+    return {"checkable": True, "right": verdict_two_sided(claimed, sh),
+            "min_claimed_share": min(sh[k] for k in claimed), "total_share": sum(sh[k] for k in claimed)}
