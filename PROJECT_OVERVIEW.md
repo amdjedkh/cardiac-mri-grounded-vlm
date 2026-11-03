@@ -91,6 +91,18 @@ A Flask app with two modules:
 
 **Open:** the main open questions concern the synthetic data and the evaluation protocol. Details are kept in private project notes.
 
+### Synthetic data limitations
+
+Applies to the LeFusion insert run v1 (200 volumes, `experiments/EXPERIMENT_LOG.md`) and to the earlier synthetic cases.
+
+- **LeFusion keeps the input mask.** It only paints texture inside the infarct / MVO regions of the mask it is given; labels 1 and 2 pass through and the output mask equals the (padded) input mask. New lesion shapes therefore come only from our own mask edits (`synthetic_generation/mask_diversity.py`, `build_staged_test.py`), never from the generator.
+- **Pathological hearts are not augmented.** LeFusion regenerates only labels 3 and 4, so an old scar that the edited mask now calls healthy would stay bright in the image (image and mask would disagree). The inserts put real lesion masks into NORMAL train hearts only, which have no old scar.
+- **Contrast is about 63% of real.** Lesion minus healthy wall on the [-1, 1] scale: inserts +0.146 vs real train +0.231; infarct voxels only +0.149 vs +0.247. 157 of the 200 are inside the real range, 43 are fainter than the weakest real lesion (0.099). MVO contrast is close to real (+0.121 vs +0.106).
+- **Little source variety.** 25 normal hearts x 8 lesions; 43 of the 54 library lesions were used (each 1 to 9 times); Case_N016 could take none.
+- **No seed.** LeFusion's inference has no seed option, so the generated images cannot be regenerated exactly (the masks can). The backup of the run is the only copy.
+- **Test leakage risk in the weights.** The inputs contain no test patient (checked), but LeFusion's pretrained weights probably saw the test patients, because they were trained on EMIDEC without our split.
+- **Unique shapes.** Defined exactly: trim empty end slices, unroll the wall into 5 relative slice positions x 24 angle bins, mark a cell as lesion when at least 25% of its wall pixels are lesion, call two lesions the same shape when the footprint IoU is at least 0.6 after the best circular shift along the angle axis, and count with leader clustering in file order (`experiments/unique_shapes.py`). Result: 31 unique shapes among the 54 real train lesions; real + the 200 inserts 54; counting rotation as different ("shape + location") 40 real, 121 real + inserts. This is not the "about 47" that appears in the meeting notes and in the repo (README, overview): that figure is the number of usable LeFusion input cases (57 pathological minus LeFusion's 10 held-out), not a count of shapes. Any shape count taken from the meeting notes (which I have not seen) used a different definition and should not be compared with these numbers.
+
 ## 5. How to run
 
 **Setup**
