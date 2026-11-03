@@ -46,13 +46,26 @@ def main(root, out):
         gray = np.clip((sl - lo) / max(hi - lo, 1e-6), 0, 1)
         m2 = np.where(np.isin(msk[:, :, k], (3, 4)), 2, msk[:, :, k])
         ax.imshow(colors.apply_overlay(gray, m2, regions=["lv_cavity", "myocardium"]))
-        ax.set_xticks([]); ax.set_yticks([])
+        h, w = gray.shape
+        ax.set_xticks(range(0, w, 50)); ax.set_yticks(range(0, h, 50))
+        ax.tick_params(labelsize=7, length=2)
+        ax.set_xlabel("column (axis1)", fontsize=7, labelpad=1)
+        ax.set_ylabel("row (axis0)", fontsize=7, labelpad=1)
+        # assumed orientation (assign_aha17_segment.py): RV / septal side = image right, anterior = top
+        ax.annotate("RV side", xy=(0.995, 0.5), xycoords="axes fraction", xytext=(-6, 0), textcoords="offset points",
+                    ha="right", va="center", rotation=90, fontsize=9, color="white", fontweight="bold",
+                    bbox=dict(boxstyle="round,pad=0.2", fc="#B03030", ec="none", alpha=0.85))
+        ax.annotate("anterior", xy=(0.5, 0.995), xycoords="axes fraction", xytext=(0, -4), textcoords="offset points",
+                    ha="center", va="top", fontsize=8, color="white", bbox=dict(boxstyle="round,pad=0.15", fc="black", ec="none", alpha=0.6))
+        ax.annotate("lateral", xy=(0.005, 0.5), xycoords="axes fraction", xytext=(4, 0), textcoords="offset points",
+                    ha="left", va="center", rotation=90, fontsize=8, color="white", bbox=dict(boxstyle="round,pad=0.15", fc="black", ec="none", alpha=0.6))
         group = "normal" if cid.startswith("Case_N") else "pathological"
         ax.set_title(f"{cid}  ({group})  slice {k} of 0-{img.shape[2] - 1}", fontsize=11)
     fig.suptitle("Orientation sample: middle slice, array [axis0 = rows, axis1 = columns], row 0 at top, no flip "
-                 "(as in assign_aha17_segment.py). Blue = cavity, green = myocardium.", fontsize=12)
-    fig.tight_layout(rect=[0, 0, 1, 0.97])
-    fig.savefig(out, dpi=60)
+                 "(as in assign_aha17_segment.py).\nBlue = cavity, green = myocardium. RV side / anterior / lateral are the ASSUMED "
+                 "orientation, author-inspected, not confirmed by a cardiologist.", fontsize=12)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    fig.savefig(out, dpi=80)
     print("wrote", out)
 
 
