@@ -57,3 +57,10 @@ data alone. Not tested yet; this entry covers generation and image checks only.
 - `experiments/insert_list_v2.txt` marks those 3 as excluded and the other 197 as included. No file was deleted. The segmentation comparison uses the 197.
 - The old reference file is kept at `~/private_notes/mask_diversity_reference_67cases_old.json` (it is also in git history).
 - The other accept rules (area ratio, lesion leaving the wall, lesion lost) do not use the reference and were not repeated.
+
+## 2026-11-03: rule-based report baseline and the circularity of its location score
+- Baseline: `experiments/rule_based_report.py`, a fixed template filled from the expert mask of the slice shown to Gemini, 80 train + 20 test cases, no AI, no training.
+- **Its score on the existing location check is circular.** The wall location is computed by `assign_segment()`, the function the check compares against, so the match is 66 of 66 by construction. It is a ceiling for that check, not accuracy.
+- Independent check (`experiments/location_check_independent.py`, separate code, pixel-wise share of infarct pixels inside the claimed sectors, right if >= 0.5, declared before scoring): rule-based 41 of 66 right (62%, mean share 0.63); Gemini 20 of 39 (51%, mean 0.54). On the 39 cases where Gemini names a wall: rule-based 26 of 39 (mean share 0.67), Gemini 20 of 39 (0.54). The rule-based text uses the arc-midpoint segment, which misses much of a wide lesion.
+- Other existing checks (format, negative statements, presence on the slice) are 100% for both and do not separate them. Gemini names a checkable wall in only 39 of 100 reports.
+- Caveats: the sector orientation (image top = anterior, right = septal) is assumed in both checks; ring level is not checked; test cases use the older 100-report folder.
