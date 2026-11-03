@@ -20,6 +20,11 @@ EMIDEC_ROOT = os.environ.get("EMIDEC_ROOT", os.path.expanduser("~/Downloads/emid
 # Backup of the LeFusion insert run: input_1..3/{images,labels}, output_1..3/{Image,Mask}, MANIFEST.json
 FULL_INSERT_DIR = os.environ.get("FULL_INSERT_DIR", os.path.expanduser("~/backups/full_insert_v1"))
 EXPERIMENT_OUT_DIR = os.environ.get("EXPERIMENT_OUT_DIR", os.path.join(FULL_INSERT_DIR, "reports"))
+# Local staging folder for nnU-Net datasets (nnUNet_raw/Dataset501_EMIDECArm1 is built here, then uploaded to Modal)
+NNUNET_DIR = os.environ.get("NNUNET_DIR", os.path.expanduser("~/nnunet_work"))
+NNUNET_DATASET_ID = 501
+NNUNET_DATASET_NAME = "Dataset501_EMIDECArm1"
+CROP_SHAPE = (72, 72, 10)   # [H, W, D] space shared by all arms
 
 # ---------------------------------------------------------------- seeds
 SPLIT_SEED = 42            # patient-level train/test split (splits/make_split.py)
