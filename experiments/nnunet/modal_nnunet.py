@@ -27,7 +27,8 @@ import subprocess
 
 import modal
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+_REPO_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+sys.path.insert(0, _REPO_ROOT)
 import config
 
 app = modal.App("nnunet-emidec")
@@ -36,7 +37,8 @@ VOL = "/cardiac-data"
 GPU = "L4"
 N_CPU = 8
 
-image = modal.Image.debian_slim(python_version="3.11").pip_install("nnunetv2")
+image = (modal.Image.debian_slim(python_version="3.11").pip_install("nnunetv2")
+         .add_local_file(os.path.join(_REPO_ROOT, "config.py"), "/root/config.py"))
 
 
 def _env():
