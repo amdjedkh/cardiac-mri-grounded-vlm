@@ -94,3 +94,8 @@ Checks (thresholds declared before scoring, none tuned):
 - Extrapolation (98 s first epoch + 8.60 s per further epoch + 99 s fixed): 250 epochs about 2,340 s (39 min); 1000 epochs about 8,790 s (2.4 h). At about $0.80/h for an L4 (rate from memory, not checked) that is about $0.5 and $2.0 per run; 9 runs (arms 1 to 3, 3 seeds) about $4.7 at 250 epochs and $17.6 at 1000. Arms 2 to 5 may be slightly slower with the custom insert-mixing trainer, which is not built yet. Exact cost: Modal billing page.
 - The "validation" Dice from `-f all` is on the TRAINING cases (mean foreground Dice 0.819; LV 0.964, myocardium 0.891, infarct 0.643, MVO 0.778 after 20 epochs). It only shows that the pipeline learns; it is not a performance number and no test case was used.
 - A first launch failed at container start (config.py was not shipped into the image); fixed with `add_local_file`; no compute was billed for the failed start. Two launch chains briefly ran at once; both were stopped before any container ran, and one chain produced the single reported run.
+
+## 2026-11-03: declarations (before any arm run)
+- 1000 epochs for every arm (decided from the trial: 8.6 s/epoch, about 2.4 h and about $2 per run on an L4; not revisited after results).
+- Report-side location scoring: two-sided check primary, recall-only secondary, the existing check a legacy column. Its defect is documented in README.md: it requires every wall word to fall inside the single arc-midpoint segment, so complete multi-sector descriptions score wrong (rule-based v2 9/66 vs 65/66 two-sided).
+- Plan: `experiments/SEGMENTATION_COMPARISON_PLAN.md` (declarations section).
