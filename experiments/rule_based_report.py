@@ -17,6 +17,10 @@ CIRCULARITY (read this before quoting any number): the location claim is
 produced with assign_segment(), the same function the existing location check
 compares against, so the rule-based report matches that check BY CONSTRUCTION
 (66 of 66). That score is a ceiling for the check, not evidence of accuracy.
+Version 2 (build_report(version=2)) names every sector holding >= 15% of the
+infarct pixels on the slice shown; v1 (default) is unchanged. v2 is derived
+from the pixel shares, so on the independent check it is also close to a ceiling
+(same geometry assumptions), not independent evidence of accuracy.
 The independent check (location_check_independent.py, pixel-wise sector share,
 written separately and not importing any of the checker's code) is the one to
 read; both are printed.
@@ -58,10 +62,11 @@ from prompts_region_grounded import check_region_grounding
 from compare_baselines import check_negative_findings
 
 INF, MVO = 3, 4
-SECTOR_MIN = 0.10
+SECTOR_MIN = 0.10          # v1: sectors listed in the 'also extends' sentence
+SECTOR_MIN_V2 = 0.15       # v2 (declared 2026-11-03): the report names EVERY sector holding >= 15% of the infarct pixels
 
 
-def slice_facts(case_id, slice_idx):
+def slice_facts(case_id, slice_idx, sector_min=SECTOR_MIN):
     mask3 = md.load_case(config.EMIDEC_ROOT, case_id)[1]
     m2 = mask3[:, :, slice_idx]
     facts = {"slice": slice_idx, "n_slices": mask3.shape[2], "infarct": bool((m2 == INF).any()), "mvo": bool((m2 == MVO).any())}
@@ -77,7 +82,7 @@ def slice_facts(case_id, slice_idx):
     if inf_px.any():
         counts = Counter(sector[inf_px])
         total = inf_px.sum()
-        facts["infarct_sectors"] = [s for s, c in counts.most_common() if c / total >= SECTOR_MIN]
+        facts["infarct_sectors"] = [s for s, c in counts.most_common() if c / total >= sector_min]
         les = np.isin(g.label, (INF, MVO))
         bins = (np.degrees(g.theta) % 360 // 10).astype(int)
         fr = [les[bins == b].mean() for b in range(36) if les[bins == b].any()]
@@ -99,8 +104,8 @@ def wall_phrase(f):
     return f"The infarct is partial thickness, occupying about {w:.0%} of the wall thickness"
 
 
-def build_report(case_id, slice_idx):
-    f = slice_facts(case_id, slice_idx)
+def build_report(case_id, slice_idx, version=1):
+    f = slice_facts(case_id, slice_idx, SECTOR_MIN if version == 1 else SECTOR_MIN_V2)
     seg = assign_segment(case_id, slice_idx, config.EMIDEC_ROOT)
     lines = ["Technique/quality statement: The cardiac MRI study is of diagnostic quality.", "", "Findings:",
              "The left ventricular cavity is identified [region: lv_cavity]."]
@@ -110,7 +115,12 @@ def build_report(case_id, slice_idx):
         lines.append(f"Hyperenhancement consistent with myocardial infarction is present in the {s['aha_segment_name']} "
                      f"segment (AHA segment {s['aha_segment_number']}) [region: infarct].")
         extra = [x for x in f.get("infarct_sectors", []) if x not in s["aha_segment_name"]]
-        if extra:
+        if version == 2:
+            names = f["infarct_sectors"]
+            lines[-1] = ("Hyperenhancement consistent with myocardial infarction involves the "
+                         + ", ".join(names[:-1]) + (" and " if len(names) > 1 else "") + names[-1]
+                         + (" sectors" if len(names) > 1 else " sector") + " [region: infarct].")
+        elif extra:
             lines.append(f"On this slice the infarct also extends into the {' and '.join(extra)} sector(s) [region: infarct].")
         if "wall_fraction" in f:
             lines.append(wall_phrase(f) + " [region: infarct].")

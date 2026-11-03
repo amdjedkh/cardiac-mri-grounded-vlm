@@ -64,3 +64,33 @@ data alone. Not tested yet; this entry covers generation and image checks only.
 - Independent check (`experiments/location_check_independent.py`, separate code, pixel-wise share of infarct pixels inside the claimed sectors, right if >= 0.5, declared before scoring): rule-based 41 of 66 right (62%, mean share 0.63); Gemini 20 of 39 (51%, mean 0.54). On the 39 cases where Gemini names a wall: rule-based 26 of 39 (mean share 0.67), Gemini 20 of 39 (0.54). The rule-based text uses the arc-midpoint segment, which misses much of a wide lesion.
 - Other existing checks (format, negative statements, presence on the slice) are 100% for both and do not separate them. Gemini names a checkable wall in only 39 of 100 reports.
 - Caveats: the sector orientation (image top = anterior, right = septal) is assumed in both checks; ring level is not checked; test cases use the older 100-report folder.
+
+## 2026-11-03: two-sided location check, shuffle baseline, rule-based v2, new Gemini reports
+Scores are in `~/backups/full_insert_v1/reports/location_scores_v2.csv` (`experiments/score_reports.py`). Denominators are "right / checkable"; a report is checkable only if it names a wall in the [region: infarct] sentence AND the slice shown has infarct pixels.
+
+Checks (thresholds declared before scoring, none tuned):
+- **existing**: wall words vs the arc-midpoint AHA segment (`check_location_claims_batch` logic).
+- **recall-only** (independent, `location_check_independent.py`): share of infarct pixels in the claimed sectors (lenient word map) >= 0.5.
+- **two-sided** (independent, from `docs/claim_geometry_score_design.md`): strict word map; right only if EVERY claimed sector holds >= 10% of the infarct pixels AND the claimed sectors together hold >= 80%.
+- **shuffle**: each report paired with another case's mask slice, 1000 seeded permutations without fixed points; chance = mean of right / checkable, 5th to 95th percentile in brackets.
+
+| source (100 cases) | existing | recall-only | two-sided |
+|---|---|---|---|
+| rule-based v1 | 66/66 = 1.00 (chance .27) | 41/66 = .62 (.26) | 4/66 = .06 (.02) |
+| rule-based v2 (sectors >= 15%) | 9/66 = .14 (.05) | 66/66 = 1.00 (.55) | 65/66 = .98 (.09) |
+| Gemini old100 (September folder) | 25/50 = .50 (.29) | 28/50 = .56 (.33) | 9/50 = .18 (.07) |
+| Gemini new100 (pinned config, 2 Nov) | 24/37 = .65 (.33) | 21/37 = .57 (.30) | 8/37 = .22 (.07) |
+
+- The 20 test cases separately (right / checkable; chance in brackets), existing | recall-only | two-sided: rule-based v1 13/13 | 9/13 | 3/13; rule-based v2 4/13 | 13/13 | 13/13; Gemini old 5/10 | 7/10 | 2/10; Gemini new 7/8 | 7/8 | 4/8. Chance levels on 20 cases are wide (for example 0 to 0.67); these are small counts, not evidence of a difference.
+- Rule-based v1 on the existing check (66/66) is circular. Rule-based v2 on the independent checks is also close to a ceiling: v2 names the sectors from the same pixel shares the independent check uses, so 65/66 is not independent evidence. v2 on the existing check (9/66) shows a defect of that check: it requires every named word to sit inside the single arc-midpoint segment, so a complete multi-sector description scores wrong.
+- Gemini beats shuffled chance on every check (for example two-sided .22 vs .07), but the two-sided score is low: most Gemini location claims name one wall for a lesion that spans several sectors. Wilson 95% intervals are wide (24/37: .49 to .78; 25/50: .37 to .63), so new vs old is not a demonstrated difference; the new folder has fewer checkable reports (37 vs 50).
+- Other existing checks (format, negative statements, presence) are 100% or near it for all four sources and do not separate them.
+- **Non-determinism**: with the same pinned settings (vertex, gemini-3.1-flash-lite, temperature 0, seed 42), 71 of the 80 train reports of the new run are identical to the 80-case run (`run_train_v1`); 9 differ. The old September folder matches the new one on 0 of the 20 test cases (earlier settings, no record of them).
+- New reports: `EMIDEC/run_all100_pinned/outputs_region_grounded/` (100 records, each with `generation_settings`: vertex, gemini-3.1-flash-lite, 0.0, 42; none off-config). Old folders untouched. Script: `experiments/run_all100_pinned.py`.
+
+## 2026-11-03: nnU-Net 2D trial, arm 1 (one run, 20 epochs, L4)
+- Setup: Dataset501_EMIDECArm1 (80 train volumes, 72 x 72 x 10, [-1, 1], no normalization by nnU-Net), nnU-Net 2.8.1, torch 2.15.0, trainer `nnUNetTrainer_20epochs`, fold `all` (no validation split), L4 GPU, 8 CPUs. No test case, no insert.
+- Epoch time: first epoch 98.0 s (warm-up), then 8.60 s on average (8.25 to 9.51 s) over the next 19. The 20 epochs took 261.5 s; the training command took 360.3 s in all (about 99 s fixed: start-up, planning, final pass over the 80 training volumes). Preprocessing took 19.1 s on CPU. Wall time of the GPU step as seen from here was about 19 minutes, mostly waiting and container start, which I could not separate.
+- Extrapolation (98 s first epoch + 8.60 s per further epoch + 99 s fixed): 250 epochs about 2,340 s (39 min); 1000 epochs about 8,790 s (2.4 h). At about $0.80/h for an L4 (rate from memory, not checked) that is about $0.5 and $2.0 per run; 9 runs (arms 1 to 3, 3 seeds) about $4.7 at 250 epochs and $17.6 at 1000. Arms 2 to 5 may be slightly slower with the custom insert-mixing trainer, which is not built yet. Exact cost: Modal billing page.
+- The "validation" Dice from `-f all` is on the TRAINING cases (mean foreground Dice 0.819; LV 0.964, myocardium 0.891, infarct 0.643, MVO 0.778 after 20 epochs). It only shows that the pipeline learns; it is not a performance number and no test case was used.
+- A first launch failed at container start (config.py was not shipped into the image); fixed with `add_local_file`; no compute was billed for the failed start. Two launch chains briefly ran at once; both were stopped before any container ran, and one chain produced the single reported run.
