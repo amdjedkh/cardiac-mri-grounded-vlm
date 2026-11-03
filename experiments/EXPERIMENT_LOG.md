@@ -49,3 +49,11 @@ data alone. Not tested yet; this entry covers generation and image checks only.
 - Lesions are inserted into normal hearts, so the images contain no real scar tissue characteristics beyond what LeFusion learned.
 - No seed: the generated images cannot be regenerated exactly. The backup is the only copy of this set.
 - The crop uses the ground-truth label box (see the plan below).
+
+## 2026-11-03: reference recomputed from train cases only; insert list v2
+- The accept rules of `mask_diversity.evaluate()` compare each insert with a "real" reference (`synthetic_generation/mask_diversity_reference.json`). The reference used for the insert run was computed from every `Case_P*` folder (67 cases), so it **included the test patients**; the contiguity maximum (0.934) and the MVO-touch minimum (0.968) came partly from them.
+- It is now computed from the 54 train pathological cases only (`compute_reference` reads `splits/split_v1.json`): contiguity 0.3665 to 0.8882 (was 0.3665 to 0.9343), MVO touch minimum 0.9735 over 32 cases (was 0.9683 over 40). A 72 x 72 x 10 crop does not change the score (difference 0 on all 54 train cases), so the full-size reference is valid at the insert resolution.
+- Re-applying the reference-dependent rules to the 200 inserts (`experiments/reapply_reference.py`): 0 rejected under the old reference, 3 under the new one, all on MVO touch: Case_N030__insP02 (0.971), insP03 (0.970), insP04 (0.969), against a minimum of 0.974. Contiguity passes for all 200.
+- `experiments/insert_list_v2.txt` marks those 3 as excluded and the other 197 as included. No file was deleted. The segmentation comparison uses the 197.
+- The old reference file is kept at `~/private_notes/mask_diversity_reference_67cases_old.json` (it is also in git history).
+- The other accept rules (area ratio, lesion leaving the wall, lesion lost) do not use the reference and were not repeated.
