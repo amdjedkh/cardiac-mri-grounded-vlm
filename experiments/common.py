@@ -20,7 +20,7 @@ import nibabel as nib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.join(HERE, "..")
-for sub in ("", "splits", "synthetic_generation"):
+for sub in ("", "splits", "synthetic_generation", "verification"):
     sys.path.insert(0, os.path.join(REPO_ROOT, sub))
 import config
 import mask_diversity as md
@@ -90,6 +90,21 @@ def contrast(img, mask, lesion_labels):
     if not les.any() or not wall.any():
         return float("nan")
     return float(img[les].mean() - img[wall].mean())
+
+
+def to_shape(arr, shape, fill=0):
+    """Centre pad with `fill` / centre crop to `shape` (same arithmetic as LeFusion's CropOrPad)."""
+    out = np.full(shape, fill, arr.dtype)
+    src, dst = [], []
+    for n, t in zip(arr.shape, shape):
+        if n <= t:
+            o = (t - n) // 2
+            src.append(slice(0, n)); dst.append(slice(o, o + n))
+        else:
+            o = (n - t) // 2
+            src.append(slice(o, o + t)); dst.append(slice(0, t))
+    out[tuple(dst)] = arr[tuple(src)]
+    return out
 
 
 def real_train_cases():
