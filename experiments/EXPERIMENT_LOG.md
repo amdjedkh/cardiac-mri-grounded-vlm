@@ -109,3 +109,9 @@ Authorised by the user ("Go for the 9 runs"). Recorded BEFORE launch.
 - Jobs and exact command per job (`nnUNetv2_train <dataset> 2d all -tr <trainer> -device cuda --c`, env EMIDEC_SEED, EMIDEC_SYN_FRACTION, nnUNet_results=/cardiac-data/nnunet/results/arm{A}_seed{S}):
   arm 1: 501, nnUNetTrainerEmidec, syn 0; arm 2: 502, nnUNetTrainerEmidec, syn 0.3333; arm 3: 501, nnUNetTrainerEmidecStrongAug, syn 0; each for seeds 0, 1, 2.
 - Launcher: `modal run --detach experiments/nnunet/modal_nnunet.py::run_arms --arms 1,2,3 --seeds 0,1,2` (spawns 9 calls). Changes vs PR #28: spawn instead of starmap, `--c` added, volume commit every 120 s so logs are readable, job raises on non-zero exit or missing checkpoint_final.pth (retries=1).
+
+## 2026-11-04: health check of the 9 running jobs (read at about 11:27 CET, about 2 h after launch; the 10-15 min check was late)
+- All 9 containers ran in parallel (no queueing). No Traceback, no NaN in any log. Epochs done at the read: arm 1 seeds 0/1/2: 747/768/740; arm 2: 688/670/522; arm 3: 499/489/467 (of 1000).
+- Median epoch time: arm 1 7.35-7.87 s, arm 2 7.44-7.76 s, arm 3 7.63-8.04 s (first epoch 73-98 s). Train loss first epoch 0.20-0.35, latest -0.72 to -0.86 (falling). Training-case pseudo Dice (last epoch, first three classes): arm 1 0.99/0.96/0.93, arm 2 0.98/0.94/0.91, arm 3 0.97/0.91/0.85 (training data, not performance).
+- Arm 2 log line: "synthetic fraction 0.3333 (n per batch 8 of 24)". The per-batch insert count is not logged on Modal; the exact 8 of 24 was verified in the local test only.
+- Modal container torch version not found in the logs; not recorded.
