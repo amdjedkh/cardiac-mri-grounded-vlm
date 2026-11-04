@@ -99,3 +99,13 @@ Checks (thresholds declared before scoring, none tuned):
 - 1000 epochs for every arm (decided from the trial: 8.6 s/epoch, about 2.4 h and about $2 per run on an L4; not revisited after results).
 - Report-side location scoring: two-sided check primary, recall-only secondary, the existing check a legacy column. Its defect is documented in README.md: it requires every wall word to fall inside the single arc-midpoint segment, so complete multi-sector descriptions score wrong (rule-based v2 9/66 vs 65/66 two-sided).
 - Plan: `experiments/SEGMENTATION_COMPARISON_PLAN.md` (declarations section).
+
+## 2026-11-04: launch record, arms 1-3 x seeds 0,1,2 (1000 epochs, one L4 job each)
+Authorised by the user ("Go for the 9 runs"). Recorded BEFORE launch.
+- Code: branch `launch-arms-1-3`, launcher commit `cbb81ecf87815bfe5a25567bef29b5147fb760a1` (parent `926eacf`, tip of the PR stack #11-#29).
+- Software on Modal: nnunetv2 2.8.1 (pip pin), torch resolved by pip at image build (local venv: torch 2.15.0; the Modal container's torch version is printed in each job log and is recorded below when read), python 3.11, L4, 8 CPU, 16 GB.
+- Datasets (sha256 of the sorted per-file sha256 list, first 16 hex; uploaded to volume `cardiac-data` under `nnunet/nnUNet_preprocessed/`): Dataset501 raw 3c2ba7f5ef0c8a42 (161 files), preprocessed a5981e11a416f50c (323 files); Dataset502 raw 561365462b21d2d1 (555 files), preprocessed b608c36bbd4a928e (1111 files). Preprocessed 501 on the volume was replaced by the local copy.
+- Seeds: 0, 1, 2 (env EMIDEC_SEED), same in every arm.
+- Jobs and exact command per job (`nnUNetv2_train <dataset> 2d all -tr <trainer> -device cuda --c`, env EMIDEC_SEED, EMIDEC_SYN_FRACTION, nnUNet_results=/cardiac-data/nnunet/results/arm{A}_seed{S}):
+  arm 1: 501, nnUNetTrainerEmidec, syn 0; arm 2: 502, nnUNetTrainerEmidec, syn 0.3333; arm 3: 501, nnUNetTrainerEmidecStrongAug, syn 0; each for seeds 0, 1, 2.
+- Launcher: `modal run --detach experiments/nnunet/modal_nnunet.py::run_arms --arms 1,2,3 --seeds 0,1,2` (spawns 9 calls). Changes vs PR #28: spawn instead of starmap, `--c` added, volume commit every 120 s so logs are readable, job raises on non-zero exit or missing checkpoint_final.pth (retries=1).
