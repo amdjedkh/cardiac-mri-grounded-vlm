@@ -130,20 +130,33 @@ def train_arm(arm, seed, epochs_override=None):
     Preprocessed Dataset50x folders must already be on the volume (same plans as Dataset501)."""
     import nnunetv2
     shutil.copy("/root/nnUNetTrainerEmidec.py", os.path.join(nnunetv2.__path__[0], "training", "nnUNetTrainer", "nnUNetTrainerEmidec.py"))
+    import threading
     did, trainer, frac = ARMS[arm]
     results = f"{VOL}/nnunet/results/arm{arm}_seed{seed}"
     volume.reload()
-    res = _run(["nnUNetv2_train", str(did), "2d", "all", "-tr", trainer, "-device", "cuda"],
+    stop = threading.Event()
+
+    def _commit_loop():  # makes the training log and checkpoints visible from outside while the job runs
+        while not stop.wait(120):
+            try:
+                volume.commit()
+            except Exception:
+                pass
+    threading.Thread(target=_commit_loop, daemon=True).start()
+    # --c: continue from checkpoint_latest.pth (saved every 50 epochs) if one exists, else start from scratch
+    res = _run(["nnUNetv2_train", str(did), "2d", "all", "-tr", trainer, "-device", "cuda", "--c"],
                _env(results, {"EMIDEC_SEED": str(seed), "EMIDEC_SYN_FRACTION": str(frac)}))
+    stop.set()
     out = {"arm": arm, "seed": seed, "gpu": GPU, "dataset": did, "trainer": trainer, "syn_fraction": frac, "train": res}
     for root, _, files in os.walk(results):
         if "checkpoint_final.pth" in files:
             out["checkpoint_final"] = os.path.join(root, "checkpoint_final.pth")
-            logs = sorted(f for f in files if f.startswith("training_log"))
-            if logs:
-                text = open(os.path.join(root, logs[-1])).read()
-                out["epoch_seconds"] = [float(x) for x in re.findall(r"Epoch time: ([0-9.]+) s", text)]
+            out["epoch_seconds"] = []
+            for f in sorted(f for f in files if f.startswith("training_log")):
+                out["epoch_seconds"] += [float(x) for x in re.findall(r"Epoch time: ([0-9.]+) s", open(os.path.join(root, f)).read())]
     volume.commit()
+    if res["returncode"] != 0 or "checkpoint_final" not in out:
+        raise RuntimeError(f"arm {arm} seed {seed} failed: {res['tail']}")  # raising lets Modal retry (resumes via --c)
     return out
 
 
@@ -152,5 +165,6 @@ def run_arms(arms="1,2,3", seeds="0,1,2"):
     """Launch every (arm, seed) as its own parallel GPU job. Only run after an explicit go."""
     jobs = [(int(a), int(s)) for a in arms.split(",") for s in seeds.split(",")]
     print("jobs:", jobs)
-    for r in train_arm.starmap(jobs):
-        print(json.dumps({k: v for k, v in r.items() if k != "epoch_seconds"}, indent=1)[:1500])
+    for arm, seed in jobs:  # spawn: jobs keep running if this client disconnects (use `modal run --detach`)
+        call = train_arm.spawn(arm, seed)
+        print(f"arm {arm} seed {seed} function_call_id {call.object_id}")
