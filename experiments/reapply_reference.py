@@ -11,7 +11,7 @@ the wall, lesion lost) do not depend on the reference and are not repeated.
 Writes experiments/insert_list_v2.txt: every one of the 200 files, tab separated
 as  file  included|excluded  reason. Files are never deleted.
 
-    python experiments/reapply_reference.py [--old PATH_TO_OLD_REFERENCE_JSON]
+    python experiments/reapply_reference.py --old PATH_TO_OLD_REFERENCE_JSON
 """
 
 import os
@@ -21,7 +21,6 @@ import argparse
 import common
 from common import config, md, load_nii
 
-OLD_DEFAULT = os.path.expanduser("~/private_notes/mask_diversity_reference_67cases_old.json")
 
 
 def rejection(m, ref):
@@ -40,7 +39,7 @@ def rejection(m, ref):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--old", default=OLD_DEFAULT)
+    ap.add_argument("--old", required=True, help="path to the old (67-case) reference JSON, kept outside the repo")
     a = ap.parse_args()
     import json
     new_ref, old_ref = md.load_reference(), json.load(open(a.old))

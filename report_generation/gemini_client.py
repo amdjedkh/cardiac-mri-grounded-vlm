@@ -21,6 +21,8 @@ import config
 def make_client():
     """Client for the backend chosen in config.py. The key is never printed."""
     if config.GEMINI_BACKEND == "vertex":
+        if not config.GCP_PROJECT:
+            raise RuntimeError("GCP_PROJECT not set (config.GEMINI_BACKEND is 'vertex'): export GCP_PROJECT=<project id>.")
         return genai.Client(vertexai=True, project=config.GCP_PROJECT, location=config.GCP_LOCATION)
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
