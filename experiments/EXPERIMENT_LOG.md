@@ -123,6 +123,6 @@ Launched from commit `a76a706` (branch `launch-arms-1-3`), 2026-11-04 about 09:2
   arm 1: s0 1000, -0.892, 8362, 9508, 0.981; s1 1000, -0.890, 7968, 9568, 0.982; s2 1000, -0.891, 7808, 9398, 0.981.
   arm 2: s0 1000, -0.862, 7732, 8908, 0.970; s1 1000, -0.861, 7954, 9116, 0.970; s2 1000, -0.862, 7726, 9365, 0.970.
   arm 3: s0 1000, -0.792, 8390, 10023, 0.950; s1 1000, -0.790, 8154, 9763, 0.951; s2 1000, -0.792, 7762, 8882, 0.949.
-- Total epoch time over the 9 jobs: 72,856 s (20.2 GPU-hours of epochs); per job 2.1-2.3 h of epochs, 2.5-2.8 h first-to-last log line. The Modal bill was not read; cost unverified.
+- Total epoch time over the 9 jobs: 71,856 s (20.0 GPU-hours of epochs); per job 2.1-2.3 h of epochs, 2.5-2.8 h first-to-last log line. The Modal bill was not read; cost unverified.
 - The Modal container torch version is not printed in any training log; not recorded. nnU-Net 2.8.1 is pinned in the image.
 - No test case was used.
