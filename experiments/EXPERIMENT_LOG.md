@@ -115,3 +115,14 @@ Authorised by the user ("Go for the 9 runs"). Recorded BEFORE launch.
 - Median epoch time: arm 1 7.35-7.87 s, arm 2 7.44-7.76 s, arm 3 7.63-8.04 s (first epoch 73-98 s). Train loss first epoch 0.20-0.35, latest -0.72 to -0.86 (falling). Training-case pseudo Dice (last epoch, first three classes): arm 1 0.99/0.96/0.93, arm 2 0.98/0.94/0.91, arm 3 0.97/0.91/0.85 (training data, not performance).
 - Arm 2 log line: "synthetic fraction 0.3333 (n per batch 8 of 24)". The per-batch insert count is not logged on Modal; the exact 8 of 24 was verified in the local test only.
 - Modal container torch version not found in the logs; not recorded.
+
+## 2026-11-05: finish record, arms 1-3 x seeds 0,1,2
+Launched from commit `a76a706` (branch `launch-arms-1-3`), 2026-11-04 about 09:22 CET. Checked 2026-11-05 13:10 CET.
+- All 9 jobs have `checkpoint_final.pth` on the volume (`nnunet/results/arm{A}_seed{S}/.../fold_all/`) and exactly one `training_log_*.txt` each, with 1000 epoch-time lines, no Traceback, no NaN: **all 9 ran uninterrupted, none retried or resumed** (a resumed run would have a second log file).
+- Per job (epochs, final train loss, summed epoch time s, first-to-last log timestamp s, last "Mean Validation Dice" which is on TRAINING cases with `-f all`, not performance):
+  arm 1: s0 1000, -0.892, 8362, 9508, 0.981; s1 1000, -0.890, 7968, 9568, 0.982; s2 1000, -0.891, 7808, 9398, 0.981.
+  arm 2: s0 1000, -0.862, 7732, 8908, 0.970; s1 1000, -0.861, 7954, 9116, 0.970; s2 1000, -0.862, 7726, 9365, 0.970.
+  arm 3: s0 1000, -0.792, 8390, 10023, 0.950; s1 1000, -0.790, 8154, 9763, 0.951; s2 1000, -0.792, 7762, 8882, 0.949.
+- Total epoch time over the 9 jobs: 72,856 s (20.2 GPU-hours of epochs); per job 2.1-2.3 h of epochs, 2.5-2.8 h first-to-last log line. The Modal bill was not read; cost unverified.
+- The Modal container torch version is not printed in any training log; not recorded. nnU-Net 2.8.1 is pinned in the image.
+- No test case was used.
