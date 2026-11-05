@@ -99,3 +99,30 @@ Checks (thresholds declared before scoring, none tuned):
 - 1000 epochs for every arm (decided from the trial: 8.6 s/epoch, about 2.4 h and about $2 per run on an L4; not revisited after results).
 - Report-side location scoring: two-sided check primary, recall-only secondary, the existing check a legacy column. Its defect is documented in README.md: it requires every wall word to fall inside the single arc-midpoint segment, so complete multi-sector descriptions score wrong (rule-based v2 9/66 vs 65/66 two-sided).
 - Plan: `experiments/SEGMENTATION_COMPARISON_PLAN.md` (declarations section).
+
+## 2026-11-04: launch record, arms 1-3 x seeds 0,1,2 (1000 epochs, one L4 job each)
+Authorised by the user ("Go for the 9 runs"). Recorded BEFORE launch.
+- Code: branch `launch-arms-1-3`, launcher commit `cbb81ecf87815bfe5a25567bef29b5147fb760a1` (parent `926eacf`, tip of the PR stack #11-#29).
+- Software on Modal: nnunetv2 2.8.1 (pip pin), torch resolved by pip at image build (local venv: torch 2.15.0; the Modal container's torch version is printed in each job log and is recorded below when read), python 3.11, L4, 8 CPU, 16 GB.
+- Datasets (sha256 of the sorted per-file sha256 list, first 16 hex; uploaded to volume `cardiac-data` under `nnunet/nnUNet_preprocessed/`): Dataset501 raw 3c2ba7f5ef0c8a42 (161 files), preprocessed a5981e11a416f50c (323 files); Dataset502 raw 561365462b21d2d1 (555 files), preprocessed b608c36bbd4a928e (1111 files). Preprocessed 501 on the volume was replaced by the local copy.
+- Seeds: 0, 1, 2 (env EMIDEC_SEED), same in every arm.
+- Jobs and exact command per job (`nnUNetv2_train <dataset> 2d all -tr <trainer> -device cuda --c`, env EMIDEC_SEED, EMIDEC_SYN_FRACTION, nnUNet_results=/cardiac-data/nnunet/results/arm{A}_seed{S}):
+  arm 1: 501, nnUNetTrainerEmidec, syn 0; arm 2: 502, nnUNetTrainerEmidec, syn 0.3333; arm 3: 501, nnUNetTrainerEmidecStrongAug, syn 0; each for seeds 0, 1, 2.
+- Launcher: `modal run --detach experiments/nnunet/modal_nnunet.py::run_arms --arms 1,2,3 --seeds 0,1,2` (spawns 9 calls). Changes vs PR #28: spawn instead of starmap, `--c` added, volume commit every 120 s so logs are readable, job raises on non-zero exit or missing checkpoint_final.pth (retries=1).
+
+## 2026-11-04: health check of the 9 running jobs (read at about 11:27 CET, about 2 h after launch; the 10-15 min check was late)
+- All 9 containers ran in parallel (no queueing). No Traceback, no NaN in any log. Epochs done at the read: arm 1 seeds 0/1/2: 747/768/740; arm 2: 688/670/522; arm 3: 499/489/467 (of 1000).
+- Median epoch time: arm 1 7.35-7.87 s, arm 2 7.44-7.76 s, arm 3 7.63-8.04 s (first epoch 73-98 s). Train loss first epoch 0.20-0.35, latest -0.72 to -0.86 (falling). Training-case pseudo Dice (last epoch, first three classes): arm 1 0.99/0.96/0.93, arm 2 0.98/0.94/0.91, arm 3 0.97/0.91/0.85 (training data, not performance).
+- Arm 2 log line: "synthetic fraction 0.3333 (n per batch 8 of 24)". The per-batch insert count is not logged on Modal; the exact 8 of 24 was verified in the local test only.
+- Modal container torch version not found in the logs; not recorded.
+
+## 2026-11-05: finish record, arms 1-3 x seeds 0,1,2
+Launched from commit `a76a706` (branch `launch-arms-1-3`), 2026-11-04 about 09:22 CET. Checked 2026-11-05 13:10 CET.
+- All 9 jobs have `checkpoint_final.pth` on the volume (`nnunet/results/arm{A}_seed{S}/.../fold_all/`) and exactly one `training_log_*.txt` each, with 1000 epoch-time lines, no Traceback, no NaN: **all 9 ran uninterrupted, none retried or resumed** (a resumed run would have a second log file).
+- Per job (epochs, final train loss, summed epoch time s, first-to-last log timestamp s, last "Mean Validation Dice" which is on TRAINING cases with `-f all`, not performance):
+  arm 1: s0 1000, -0.892, 8362, 9508, 0.981; s1 1000, -0.890, 7968, 9568, 0.982; s2 1000, -0.891, 7808, 9398, 0.981.
+  arm 2: s0 1000, -0.862, 7732, 8908, 0.970; s1 1000, -0.861, 7954, 9116, 0.970; s2 1000, -0.862, 7726, 9365, 0.970.
+  arm 3: s0 1000, -0.792, 8390, 10023, 0.950; s1 1000, -0.790, 8154, 9763, 0.951; s2 1000, -0.792, 7762, 8882, 0.949.
+- Total epoch time over the 9 jobs: 71,856 s (20.0 GPU-hours of epochs); per job 2.1-2.3 h of epochs, 2.5-2.8 h first-to-last log line. The Modal bill was not read; cost unverified.
+- The Modal container torch version is not printed in any training log; not recorded. nnU-Net 2.8.1 is pinned in the image.
+- No test case was used.
