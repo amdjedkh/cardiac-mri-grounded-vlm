@@ -48,7 +48,7 @@ GEMINI_MAX_RETRIES = 6     # retries on the SAME model for 429/503 errors only
 # "vertex" bills the Google Cloud project (login: gcloud auth application-default login);
 # "api_key" uses the Gemini Developer API with GEMINI_API_KEY from the environment.
 GEMINI_BACKEND = "vertex"
-GCP_PROJECT = "alpine-myth-513108-k7"
+GCP_PROJECT = os.environ.get("GCP_PROJECT", "")   # set it in the environment for the vertex backend
 GCP_LOCATION = "global"
 
 # ------------------------------------------------------ MedGemma (baseline)
