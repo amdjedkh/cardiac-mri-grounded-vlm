@@ -187,9 +187,15 @@ def lesion_metrics(mask):
 
 
 def compute_reference(emidec_root, save=True):
+    """Real-lesion reference ranges from the TRAIN pathological cases only (splits/split_v1.json).
+    An earlier version used every Case_P* folder (67 cases), which included the test patients."""
+    from split_utils import load_split
+    train = set(load_split()["train"])
     cont, touch = {}, {}
     for d in sorted(glob.glob(os.path.join(emidec_root, "Case_P*"))):
         cid = os.path.basename(d)
+        if cid not in train:
+            continue
         mask = np.asarray(nib.load(os.path.join(d, "Contours", f"{cid}.nii.gz")).dataobj).round().astype(int)
         m = lesion_metrics(mask)
         if m["contiguity"] is not None:
@@ -197,6 +203,7 @@ def compute_reference(emidec_root, save=True):
         if m["mvo_touch"] is not None:
             touch[cid] = m["mvo_touch"]
     ref = {
+        "source": "train pathological cases only (splits/split_v1.json)",
         "contiguity": {"min": min(cont.values()), "max": max(cont.values()), "n": len(cont), "per_case": cont},
         "mvo_touch": {"min": min(touch.values()), "n": len(touch), "per_case": touch},
     }
