@@ -16,7 +16,7 @@ data alone. Not tested yet; this entry covers generation and image checks only.
 - Inputs: `synthetic_generation/build_staged_test.py --mode full --per-heart 8`. Crop = bounding box of labels > 0 + 5 px in-plane, all slices; LeFusion pads to 72 x 72 x 10 and rescales to [-1, 1].
 - Library: the 54 train pathological lesions. Targets: train normal hearts only. No test-split patient anywhere (checked on the staged lists and on the outputs with `splits/check_split_leakage.py`).
 - n = 200 volumes, 25 normal hearts x 8 lesions. Case_N016 excluded: 4 slices, no library lesion could be placed (26 train normals, 25 used). 43 of the 54 library lesions were used, each 1 to 9 times.
-- Run as 3 jobs (67 / 67 / 66 volumes). Backup: `~/backups/full_insert_v1/` with SHA256 of every file in `~/private_notes/synthetic_file_hashes.sha256` (800 .nii.gz + MANIFEST.json + staged_files.txt).
+- Run as 3 jobs (67 / 67 / 66 volumes). Backup: `~/backups/full_insert_v1/` with SHA256 of every file in a local hash file outside the repo (800 .nii.gz + MANIFEST.json + staged_files.txt).
 - Checks: `experiments/validate_full.py` (200 volumes, 0 problems: output image finite, output mask equals the padded input mask, no test patient); `experiments/contrast_report.py`; `experiments/montage.py`.
 
 ### Results (contrast = mean lesion - mean healthy wall, [-1, 1] scale)
@@ -55,7 +55,7 @@ data alone. Not tested yet; this entry covers generation and image checks only.
 - It is now computed from the 54 train pathological cases only (`compute_reference` reads `splits/split_v1.json`): contiguity 0.3665 to 0.8882 (was 0.3665 to 0.9343), MVO touch minimum 0.9735 over 32 cases (was 0.9683 over 40). A 72 x 72 x 10 crop does not change the score (difference 0 on all 54 train cases), so the full-size reference is valid at the insert resolution.
 - Re-applying the reference-dependent rules to the 200 inserts (`experiments/reapply_reference.py`): 0 rejected under the old reference, 3 under the new one, all on MVO touch: Case_N030__insP02 (0.971), insP03 (0.970), insP04 (0.969), against a minimum of 0.974. Contiguity passes for all 200.
 - `experiments/insert_list_v2.txt` marks those 3 as excluded and the other 197 as included. No file was deleted. The segmentation comparison uses the 197.
-- The old reference file is kept at `~/private_notes/mask_diversity_reference_67cases_old.json` (it is also in git history).
+- The old reference file is kept in a local file outside the repo (pass it with `--old`) (it is also in git history).
 - The other accept rules (area ratio, lesion leaving the wall, lesion lost) do not use the reference and were not repeated.
 
 ## 2026-11-03: rule-based report baseline and the circularity of its location score
