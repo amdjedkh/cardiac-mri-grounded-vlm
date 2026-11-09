@@ -26,7 +26,7 @@ Arm 5 is there so "brighter" can be separated from "fewer". Arm 4 vs arm 5 is th
 ## Fixed for every arm
 - Same space: 72 x 72 x 10 volumes, per-volume min-max rescale to [-1, 1] (nnU-Net channel normalization set to none so it does not z-score), the same network (nnU-Net v2, 2D), the same epoch budget and optimizer (below). All volumes are written with the same nominal spacing (1.5625 x 1.5625 x 10 mm, as in LeFusion's files), so no arm gets resampled differently; native spacing differs by case (1.37 to 1.56 mm in plane).
 - Same 20 test cases (`splits/split_v1.json`: 13 pathological, 7 normal), never used for training, for choosing a setting, or for stopping.
-- Augmentation: every arm uses the same on-the-fly augmentation (nnU-Net's standard trainer augmentation plus the crop-centre jitter below). Arm 3 differs only by adding stronger classic augmentation on top (wider rotation and scaling ranges, elastic deformation, stronger brightness / contrast / gamma and noise ranges; exact values fixed in a trainer subclass before the first run). Arm 3 adds no extra volumes and trains for the same number of iterations. Arms 2, 4 and 5 use the standard augmentation only, not the stronger one.
+- Augmentation: every arm uses the same on-the-fly augmentation (nnU-Net's standard trainer augmentation plus the crop-centre jitter below). Arm 3 differs only by the stronger classic augmentation below, declared before any run and implemented in `nnUNetTrainerEmidecStrongAug` (`experiments/nnunet/nnUNetTrainerEmidec.py`). Arm 3 adds no extra volumes and trains for the same number of iterations. Arms 2, 4 and 5 use the standard augmentation only, not the stronger one.
 - Mixing: arms 2, 4 and 5 draw 1/3 of every batch from the inserts and 2/3 from real training volumes. Arms 1 and 3 are 100% real. The epoch length (iterations per epoch) is the same in all arms, so the number of insert files does not change training length.
 - Seeds: at least 3 per arm (the same seeds in every arm), reported as mean +- std.
 
@@ -56,8 +56,32 @@ Dice for myocardium and MVO; infarct Dice with the centre crop; arm 3 vs arm 1; 
 - Custom trainer subclasses for the jitter, the 1/3 mixing and the stronger augmentation (arm 3); epoch length fixed.
 - Reduced-epoch trainer (`nnUNetTrainer_*epochs`) only for the pipeline and cost check on arm 1, never for reported results. With `-f all` nnU-Net's own per-epoch and final "validation" is computed on the training cases, so it only shows that the model fits the data.
 
+## Arm 3 stronger augmentation (declared 2026-11-03, before any run)
+Everything else is nnU-Net's standard training pipeline plus the +-8 px crop-centre jitter used by all arms. Defaults in brackets.
+| transform | stronger setting |
+|---|---|
+| rotation | p 0.5 [0.2]; range unchanged (isotropic patch, +-180 degrees) |
+| scaling | p 0.5 [0.2]; (0.6, 1.6) [(0.7, 1.4)] |
+| elastic deformation | p 0.3 [0]; scale (0.1, 0.25) of the edge length; magnitude (0, 5) px |
+| Gaussian noise | p 0.3 [0.1]; variance (0, 0.15) [(0, 0.1)] |
+| Gaussian blur | p 0.4 [0.2] |
+| brightness | p 0.4 [0.15]; multiplier (0.6, 1.4) [(0.75, 1.25)] |
+| contrast | p 0.4 [0.15]; (0.6, 1.4) [(0.75, 1.25)] |
+| low resolution | p 0.4 [0.25] |
+| gamma, inverted | p 0.25 [0.1]; (0.6, 1.7) [(0.7, 1.5)] |
+| gamma | p 0.5 [0.3]; (0.6, 1.7) [(0.7, 1.5)] |
+| mirror | unchanged |
+
+## Implementation (built and tested locally on CPU, 2026-11-03)
+- Trainers: `nnUNetTrainerEmidec` (arms 1, 2, 4, 5) and `nnUNetTrainerEmidecStrongAug` (arm 3), nnU-Net 2.8.1, 2d configuration, fold `all`, 1000 epochs x 250 iterations, batch 24, patch 64 x 64 (plans of Dataset501, transferred unchanged to Datasets 502, 504, 505, so every arm has the identical network).
+- Seed: environment variable `EMIDEC_SEED`; seeds python, numpy, torch and the augmenter workers before the network is built. Not bit-exact (the multi-threaded augmenter delivers batches in non-deterministic order; GPU kernels are not forced deterministic), so two runs with the same seed can differ slightly; the seeds exist to vary initialisation and sampling in a recorded way.
+- Mixing (arms 2, 4, 5): `EMIDEC_SYN_FRACTION` = 1/3; every batch holds exactly 8 insert samples and 16 real ones, in shuffled positions (nnU-Net forces foreground in the last third of a batch; the shuffle keeps inserts from filling those slots, tested: mean 2.6 to 2.8 of 8, 2.67 expected). Inserts are the cases whose id contains `__ins`. Real and insert volumes are drawn with replacement.
+- Datasets: 501 = 80 real (arms 1, 3); 502 = 80 real + 197 inserts (arm 2); 504 = 80 real + the 154 bright inserts (arm 4); 505 = 80 real + a seeded random 154 of the 197 (arm 5; 121 of its 154 overlap with arm 4's). Insert volumes are LeFusion output images and masks (72 x 72 x 10, [-1, 1]). Lists: `experiments/nnunet/arm_lists.json`.
+- Jitter: integer in-plane shift of up to +-8 px (image filled with 0, segmentation with nnU-Net's ignore value) applied to the initial patch before nnU-Net's spatial transform, same for all arms.
+- Seeds for the comparison: 0, 1, 2 for every arm. Jobs for arms 1 to 3: 9 runs, one parallel GPU job each (L4).
+
 ## Cost
 Measured on one reduced-epoch arm-1 run (see the experiment log). The full 1000-epoch cost per run is extrapolated from it and given before any arm is launched; arms are only launched after an explicit go.
 
 ## Needs your decision before group 1
-Number of seeds, whether the 1000-epoch budget is affordable at the measured cost, and the exact stronger-augmentation settings for arm 3.
+Go for the 9 runs of arms 1 to 3 after the cost and job list are approved.

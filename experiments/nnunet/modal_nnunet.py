@@ -22,6 +22,7 @@ import os
 import re
 import sys
 import json
+import shutil
 import time
 import subprocess
 
@@ -37,22 +38,32 @@ VOL = "/cardiac-data"
 GPU = "L4"
 N_CPU = 8
 
-image = (modal.Image.debian_slim(python_version="3.11").pip_install("nnunetv2")
-         .add_local_file(os.path.join(_REPO_ROOT, "config.py"), "/root/config.py"))
+_HERE = os.path.dirname(os.path.abspath(__file__))
+image = (modal.Image.debian_slim(python_version="3.11").pip_install("nnunetv2==2.8.1")
+         .add_local_file(os.path.join(_REPO_ROOT, "config.py"), "/root/config.py")
+         .add_local_file(os.path.join(_HERE, "nnUNetTrainerEmidec.py"), "/root/nnUNetTrainerEmidec.py"))
+
+# arm -> nnU-Net dataset, trainer class, share of insert volumes per batch (see SEGMENTATION_COMPARISON_PLAN.md)
+ARMS = {1: (501, "nnUNetTrainerEmidec", 0.0),
+        2: (502, "nnUNetTrainerEmidec", 1 / 3),
+        3: (501, "nnUNetTrainerEmidecStrongAug", 0.0),
+        4: (504, "nnUNetTrainerEmidec", 1 / 3),
+        5: (505, "nnUNetTrainerEmidec", 1 / 3)}
 
 
-def _env():
+def _env(results=None, extra=None):
     e = dict(os.environ)
     e.update({"nnUNet_raw": f"{VOL}/nnunet/nnUNet_raw",
               "nnUNet_preprocessed": f"{VOL}/nnunet/nnUNet_preprocessed",
-              "nnUNet_results": f"{VOL}/nnunet/nnUNet_results",
+              "nnUNet_results": results or f"{VOL}/nnunet/nnUNet_results",
               "nnUNet_n_proc_DA": str(N_CPU)})
+    e.update(extra or {})
     return e
 
 
-def _run(cmd):
+def _run(cmd, env=None):
     t = time.time()
-    p = subprocess.run(cmd, env=_env(), capture_output=True, text=True)
+    p = subprocess.run(cmd, env=env or _env(), capture_output=True, text=True)
     return {"returncode": p.returncode, "seconds": round(time.time() - t, 1),
             "tail": (p.stdout + p.stderr)[-2500:]}
 
@@ -110,3 +121,36 @@ def prep(trainer="nnUNetTrainer_20epochs"):
 @app.local_entrypoint()
 def run_train(trainer="nnUNetTrainer_20epochs", fold="all"):
     print(json.dumps(train.remote(trainer, str(fold)), indent=1))
+
+
+@app.function(image=image, gpu=GPU, cpu=N_CPU, memory=16384, volumes={VOL: volume}, timeout=6 * 3600, retries=1)
+def train_arm(arm, seed, epochs_override=None):
+    """One full run (1000 epochs, final checkpoint) of one arm and seed, fold 'all'. Each (arm, seed) has its own
+    results folder, nnunet/results/arm{arm}_seed{seed}, so seeds cannot overwrite each other.
+    Preprocessed Dataset50x folders must already be on the volume (same plans as Dataset501)."""
+    import nnunetv2
+    shutil.copy("/root/nnUNetTrainerEmidec.py", os.path.join(nnunetv2.__path__[0], "training", "nnUNetTrainer", "nnUNetTrainerEmidec.py"))
+    did, trainer, frac = ARMS[arm]
+    results = f"{VOL}/nnunet/results/arm{arm}_seed{seed}"
+    volume.reload()
+    res = _run(["nnUNetv2_train", str(did), "2d", "all", "-tr", trainer, "-device", "cuda"],
+               _env(results, {"EMIDEC_SEED": str(seed), "EMIDEC_SYN_FRACTION": str(frac)}))
+    out = {"arm": arm, "seed": seed, "gpu": GPU, "dataset": did, "trainer": trainer, "syn_fraction": frac, "train": res}
+    for root, _, files in os.walk(results):
+        if "checkpoint_final.pth" in files:
+            out["checkpoint_final"] = os.path.join(root, "checkpoint_final.pth")
+            logs = sorted(f for f in files if f.startswith("training_log"))
+            if logs:
+                text = open(os.path.join(root, logs[-1])).read()
+                out["epoch_seconds"] = [float(x) for x in re.findall(r"Epoch time: ([0-9.]+) s", text)]
+    volume.commit()
+    return out
+
+
+@app.local_entrypoint()
+def run_arms(arms="1,2,3", seeds="0,1,2"):
+    """Launch every (arm, seed) as its own parallel GPU job. Only run after an explicit go."""
+    jobs = [(int(a), int(s)) for a in arms.split(",") for s in seeds.split(",")]
+    print("jobs:", jobs)
+    for r in train_arm.starmap(jobs):
+        print(json.dumps({k: v for k, v in r.items() if k != "epoch_seconds"}, indent=1)[:1500])
