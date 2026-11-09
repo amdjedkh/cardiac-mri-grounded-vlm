@@ -126,3 +126,8 @@ Launched from commit `a76a706` (branch `launch-arms-1-3`), 2026-11-04 about 09:2
 - Total epoch time over the 9 jobs: 71,856 s (20.0 GPU-hours of epochs); per job 2.1-2.3 h of epochs, 2.5-2.8 h first-to-last log line. The Modal bill was not read; cost unverified.
 - The Modal container torch version is not printed in any training log; not recorded. nnU-Net 2.8.1 is pinned in the image.
 - No test case was used.
+
+## 2026-11-09: evaluation script finalised and declarations (no test case used)
+- `experiments/nnunet/evaluate.py` now: paired patient-level bootstrap (10,000 resamples, RandomState(0)) for 2 vs 1 (PRIMARY), 3 vs 1 and 2 vs 3 (SECONDARY); secondary table of infarct false-positive voxels on the NORMAL cases (mean +- std over seeds, and the number of normal cases with any predicted infarct voxel); no verdict printed on train. Final SHA-256 `cf6860f9f787940c929611c8c4b83c909ff8e7989fc670200aed8c068a20e4b4`.
+- Tested on 4 TRAIN pathological + 4 TRAIN normal cases for all 9 models (arm 3 included). Those numbers are training-case fit, not performance.
+- Declarations: `experiments/EVAL_DECLARATIONS.md`. Next: wait for the explicit "run on test".
