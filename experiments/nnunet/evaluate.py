@@ -24,10 +24,13 @@ FROZEN SETTINGS (do not change after the first test use; the SHA-256 of this fil
                splits/split_v1.json: 13 in the test set), labelbox crop, arm 2 minus arm 1, same seed paired.
                Per case: mean over seeds of (arm 2 - arm 1). Bootstrap: resample cases with replacement,
                10,000 times, numpy RandomState(0), 95% percentile interval of the mean difference.
+               SECONDARY pairs, same bootstrap: arm 3 minus arm 1, arm 2 minus arm 3. No verdict on train.
+  false pos.   secondary table: predicted infarct voxels per NORMAL case (mean +- std over seeds) and the
+               number of normal cases with any predicted infarct voxel.
   test set     case IDs come from splits/split_v1.json. Test images are opened ONLY with
                --split test --confirm "run on test".
 
-    python experiments/nnunet/evaluate.py dice --arm 1 --seed 0 --split train --crop labelbox --cases 3
+    python experiments/nnunet/evaluate.py dice --arm 1 --seed 0 --split train --crop labelbox --sample 3
     python experiments/nnunet/evaluate.py summary --split train --crop labelbox
 """
 
@@ -98,8 +101,9 @@ def cmd_dice(a):
     else:
         cases = sorted(split["train"])
         assert not set(cases) & set(split["test"])
-    if a.cases:
-        cases = cases[:a.cases] if not a.pathological else [c for c in cases if split["patients"][c]["infarct"]][:a.cases]
+    if a.sample:  # tests only: first K pathological + first K normal cases
+        cases = ([c for c in cases if split["patients"][c]["infarct"]][:a.sample]
+                 + [c for c in cases if not split["patients"][c]["infarct"]][:a.sample])
     mdir = model_dir(a.arm, a.seed, a.results)
     ckpt = os.path.join(mdir, "fold_all", "checkpoint_final.pth")
     if not os.path.isfile(ckpt):
@@ -170,9 +174,12 @@ def cmd_summary(a):
                 v = [x for x in v if not np.isnan(x)]
                 per.append(np.mean(v))
             print(f"  arm {arm}: " + "  ".join(f"s{s} {x:.4f}" for s, x in zip(a.seeds, per)) + f"  | {np.mean(per):.4f} +- {np.std(per, ddof=1):.4f}")
-    if 1 in a.arms and 2 in a.arms:
-        d = np.array([[val(2, s, c, "infarct") - val(1, s, c, "infarct") for s in a.seeds] for c in patho])
-        print(f"\nPRIMARY: infarct Dice, arm 2 minus arm 1, {len(patho)} pathological cases, paired by seed")
+    pairs = [((2, 1), "PRIMARY"), ((3, 1), "SECONDARY"), ((2, 3), "SECONDARY")]
+    for (x, y), label in pairs:
+        if x not in a.arms or y not in a.arms:
+            continue
+        d = np.array([[val(x, s, c, "infarct") - val(y, s, c, "infarct") for s in a.seeds] for c in patho])
+        print(f"\n{label}: infarct Dice, arm {x} minus arm {y}, {len(patho)} pathological cases, paired by seed")
         for j, s in enumerate(a.seeds):
             print(f"  seed {s}: mean difference {np.nanmean(d[:, j]):+.4f}")
         per_case = np.nanmean(d, axis=1)
@@ -183,9 +190,19 @@ def cmd_summary(a):
         print(f"  mean over cases (seed-averaged) {keep.mean():+.4f}, 95% bootstrap interval [{lo:+.4f}, {hi:+.4f}] "
               f"({BOOT_N} resamples of {len(keep)} cases, RandomState({BOOT_SEED}))")
         if a.split == "test":
-            print("  improvement only if the interval excludes 0:", "YES" if lo > 0 or hi < 0 else "no")
+            print("  interval excludes 0:", "YES" if lo > 0 or hi < 0 else "no")
         else:
             print("  (no verdict printed: these are training cases)")
+    normal = [c for c in cases if next(iter(R.values()))[c]["pathological"] == "0"]
+    print(f"\nSECONDARY: infarct false-positive voxels (pred_infarct where gt_infarct is 0) on the {len(normal)} NORMAL cases")
+    for arm in a.arms:
+        means, anyn = [], []
+        for seed in a.seeds:
+            fp = [int(R[(arm, seed)][c]["pred_infarct"]) for c in normal if int(R[(arm, seed)][c]["gt_infarct"]) == 0]
+            means.append(np.mean(fp)); anyn.append(sum(v > 0 for v in fp))
+        print(f"  arm {arm}: mean voxels per case " + "  ".join(f"s{s} {m:.2f}" for s, m in zip(a.seeds, means)) +
+              f" | {np.mean(means):.2f} +- {np.std(means, ddof=1):.2f} ; normal cases with any predicted infarct voxel "
+              + "  ".join(f"s{s} {n}/{len(normal)}" for s, n in zip(a.seeds, anyn)))
 
 
 def main():
@@ -196,8 +213,7 @@ def main():
     d.add_argument("--seed", type=int, required=True)
     d.add_argument("--split", choices=["train", "test"], required=True)
     d.add_argument("--crop", choices=["labelbox", "centre"], default="labelbox")
-    d.add_argument("--cases", type=int, default=0, help="first N cases only (for tests)")
-    d.add_argument("--pathological", action="store_true", help="with --cases: take pathological cases only")
+    d.add_argument("--sample", type=int, default=0, help="tests only: first K pathological + first K normal cases")
     d.add_argument("--results", default=os.path.join(config.NNUNET_DIR, "volume_results"))
     d.add_argument("--out", default=os.path.join(config.EXPERIMENT_OUT_DIR, "segmentation"))
     d.add_argument("--device", default="cpu")
