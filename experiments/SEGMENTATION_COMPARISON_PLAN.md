@@ -5,6 +5,11 @@ Status: declared before any arm is trained (revised 2026-11-03: no validation fo
 ## Question
 Does adding the 197 accepted LeFusion inserts improve infarct segmentation on the fixed 20-case test set, compared with real data only?
 
+## Declarations of 2026-11-03 (made before any arm run)
+- **Epoch budget: 1000 epochs of 250 iterations for every arm.** Decided after the one-run trial (8.6 s per epoch on an L4, about 2.4 h and about $2 per run). Not revisited after seeing results.
+- **Location metric for the report side: the two-sided check is primary** (right only if every claimed sector holds >= 10% of the infarct pixels and the claimed sectors together hold >= 80%; `experiments/location_check_independent.py`). The recall-only version (>= 50% of the infarct pixels in the claimed sectors) is secondary. The existing check (`check_location_claims_batch`) is kept only as a **legacy column**: it compares every named wall word with one arc-midpoint segment, so a correct multi-sector description scores wrong (rule-based v2: 9 of 66 on it vs 65 of 66 on the two-sided check). Every location number is reported next to its shuffled-mask chance level.
+- These declarations do not change the primary segmentation metric below.
+
 ## Primary metric (declared now)
 Infarct Dice on the 13 pathological test cases (all 13 have an infarct label), arm 2 (real + 197 inserts) minus arm 1 (real only), evaluated on the label-box crop.
 - For each seed and each of the 13 cases, take the Dice difference arm 2 - arm 1 (same seed in both arms, so the two models are paired). Average over seeds per case.
