@@ -99,6 +99,10 @@ Applies to the LeFusion insert run v1 (200 volumes, `experiments/EXPERIMENT_LOG.
 - **Test leakage risk in the weights.** The inputs contain no test patient (checked), but LeFusion's pretrained weights probably saw the test patients, because they were trained on EMIDEC without our split.
 - **Unique shapes.** Defined exactly: trim empty end slices, unroll the wall into 5 relative slice positions x 24 angle bins, mark a cell as lesion when at least 25% of its wall pixels are lesion, call two lesions the same shape when the footprint IoU is at least 0.6 after the best circular shift along the angle axis, and count with leader clustering in file order (`experiments/unique_shapes.py`). Result: 31 unique shapes among the 54 real train lesions; real + the 200 inserts 54; counting rotation as different ("shape + location") 40 real, 121 real + inserts. This is not the "about 47" that appears in the meeting notes and in the repo (README, overview): that figure is the number of usable LeFusion input cases (57 pathological minus LeFusion's 10 held-out), not a count of shapes. Any shape count taken from the meeting notes (which I have not seen) used a different definition and should not be compared with these numbers.
 
+## Rule-based report baseline
+
+`experiments/rule_based_report.py` writes a report from the expert mask with a fixed template (no AI) for the 80 train and 20 test cases. **Its score on the existing location check is circular**: the template's wall location comes from `assign_segment()`, the same function that check compares against, so it matches by construction (66 of 66) and says nothing about accuracy. Read the independent check instead (`experiments/location_check_independent.py`, written separately, pixel-wise sector share of the infarct on the slice shown): rule-based 41 of 66 right (62%), Gemini 20 of 39 (51%); on the same 39 cases 26 of 39 vs 20 of 39. The two sets of claims differ (Gemini names a wall in only 39 of 100 reports), and the orientation behind both checks is not yet cardiologist-confirmed.
+
 ## Status
 
 The data and synthetic-generation stages are in progress. Experiments have not started.

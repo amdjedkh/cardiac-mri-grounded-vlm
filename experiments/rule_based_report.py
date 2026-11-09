@@ -13,11 +13,13 @@ the lesion occupies (median over occupied 10-degree bins of lesion pixels /
 wall pixels: >= 0.75 transmural, 0.5-0.75 more than half, < 0.5 partial);
 MVO present and in which segment.
 
-CIRCULARITY: the location claim uses assign_segment(), the same function the
-existing location check compares against, so the rule-based report matches that
-check by construction. Its location score is a ceiling for the check, not
-evidence of independent accuracy. The point of the baseline is the other
-columns and the comparison of coverage (how many claims are made at all).
+CIRCULARITY (read this before quoting any number): the location claim is
+produced with assign_segment(), the same function the existing location check
+compares against, so the rule-based report matches that check BY CONSTRUCTION
+(66 of 66). That score is a ceiling for the check, not evidence of accuracy.
+The independent check (location_check_independent.py, pixel-wise sector share,
+written separately and not importing any of the checker's code) is the one to
+read; both are printed.
 
 Scored with the existing checks:
   format    check_region_grounding(): every Findings sentence tagged, valid names
@@ -46,6 +48,7 @@ from collections import Counter, defaultdict
 import numpy as np
 
 import common
+import location_check_independent as indep
 from common import config, md, load_split
 sys.path.insert(0, os.path.join(common.REPO_ROOT, "report_generation"))
 from assign_aha17_segment import (assign_segment, determine_ring_level, nearest_sector,
@@ -149,6 +152,8 @@ def score(text, case_id, slice_idx, truth_volume, facts):
     if walls and facts["infarct"]:
         seg = assign_segment(case_id, slice_idx, config.EMIDEC_ROOT)["infarct"]
         res["location_match"] = claim_matches_real_segment(walls, seg.get("aha_segment_name", ""))
+    ind = indep.check(text, md.load_case(config.EMIDEC_ROOT, case_id)[1][:, :, slice_idx])
+    res["indep_checkable"], res["indep_share"], res["indep_right"] = ind["checkable"], ind["share"], ind["right"]
     res["negative_issue"] = len(check_negative_findings(text, truth_volume["infarct_present"], truth_volume["mvo_present"])) > 0
     pc = presence_claims(text)
     res["infarct_presence_ok"] = None if pc["infarct"] is None else pc["infarct"] == facts["infarct"]
@@ -197,6 +202,9 @@ def main():
             print(f"  {source:10s} n={len(sub):3d}  format ok {frac(sub, 'format_ok')} | location claim made {sum(r['location_claim'] for r in sub)}, "
                   f"match {frac(sub, 'location_match')} | negative-statement issue {sum(r['negative_issue'] for r in sub)} | "
                   f"infarct presence ok {frac(sub, 'infarct_presence_ok')} | MVO presence ok {frac(sub, 'mvo_presence_ok')}")
+            shares = [r["indep_share"] for r in sub if r["indep_share"] is not None]
+            print(f"  {'':10s} independent location check (pixel-wise sector share, right if >= {indep.SHARE_RIGHT}): "
+                  f"checkable {len(shares)}, right {frac(sub, 'indep_right')}, mean share {np.mean(shares) if shares else float('nan'):.2f}")
 
 
 if __name__ == "__main__":
